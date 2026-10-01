@@ -36,4 +36,11 @@ class Usuario extends Model
             'activo' => 'boolean',
         ];
     }
+
+    public function permisos()
+    {
+        return $this->belongsToMany(
+            Permiso::class, 'usuario_permiso', 'usuario_id', 'permiso_id'
+        );
+    }
 }
