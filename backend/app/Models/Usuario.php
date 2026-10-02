@@ -43,4 +43,22 @@ class Usuario extends Model
             Permiso::class, 'usuario_permiso', 'usuario_id', 'permiso_id'
         );
     }
+
+    public function asignaciones() {
+        return $this->hasMany(
+            AsignacionVehiculo::class, 'usuario_id'
+        );
+    }
+    
+    public function ubicaciones() {
+        return $this->hasMany(
+            Ubicacion::class, 'usuario_id'
+        );
+    }
+
+    public function auditorias() {
+        return $this->hasMany(
+            BitacoraAuditoria::class, 'usuario_id'
+        );
+    }
 }

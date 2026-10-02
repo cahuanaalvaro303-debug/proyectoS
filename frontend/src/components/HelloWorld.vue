@@ -1,5 +1,5 @@
 <script setup>
-  const nombre = 'Alvaro'
+  const nombre = 'Vue'
 </script>
 
 <template>
