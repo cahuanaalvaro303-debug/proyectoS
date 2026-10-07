@@ -1,11 +1,16 @@
 <script setup>
     import { ref } from 'vue'
     import api from '../services/api'
+    import { useRouter } from 'vue-router'
+
+    const router = useRouter()
 
     const email = ref('')
     const password = ref('')
     const error = ref('')
     const cargando = ref(false)
+
+    const verPassword = ref(false)
 
     const login = async () => {
         error.value = ''
@@ -19,6 +24,8 @@
             const token = respuesta.data.token
 
             localStorage.setItem('token', token)
+            
+            router.push('/menu')
 
             console.log('Login correcto')
             console.log('Token guardado: ', localStorage.getItem('token'))
@@ -28,6 +35,7 @@
 
             error.value = err.response?.data?.message || 
                 'No se pudo iniciar sesión'
+            alert(error.value)
 
         } finally {
             cargando.value = false
@@ -47,12 +55,15 @@
                         <p>Introducir credenciales</p>
                     </div>
 
-                    <v-form class="pa-4">
+                    <v-form class="pa-4" @submit.prevent="login">
                         <v-text-field label="email" v-model="email" class="" placeholder="ejemplo@ejemplo.com" type="email"></v-text-field>
-                        <v-text-field label="password" v-model="password" class="" type="password"></v-text-field>
+                        <v-text-field label="password" 
+                                      v-model="password" 
+                                      :type="verPassword ? 'text' : 'password'"
+                                      :append-inner-icon="verPassword ? 'mdi-eye' : 'mdi-eye-off'"
+                                      @click:append-inner="verPassword = !verPassword"></v-text-field>
+                        <v-btn color="primary" type="submit" :loading="cargando">Iniciar Sesión</v-btn>
                     </v-form>
-
-                    <v-btn color="primary" @submit.prevent="">Iniciar Sesión</v-btn>
                 </v-card>
             </v-col>
         </v-row>

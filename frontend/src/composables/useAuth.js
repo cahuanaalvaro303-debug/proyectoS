@@ -12,7 +12,8 @@ export function useAuth() {
         } 
 
         try {
-            const respuesta = await api.get('/user')
+            const respuesta = await api.get('/usuario')
+            console.log('Estructura de usuario', respuesta.data)
             usuario.value = respuesta.data
 
         } catch (error) {
