@@ -44,14 +44,16 @@
         v-if="display.smAndDown.value"
         @click="drawer = !drawer"
       />
-            <v-app-bar-title>Sistema de Monitoreo</v-app-bar-title>
+            <v-app-bar-title class="font-weight-bold">SISTEMA DE MONITOREO</v-app-bar-title>
             <v-spacer />
             <span v-if="usuario"
                 class="mr-5">
                 {{ usuario.nombre }}
             </span>
             <v-btn @click="cerrarSesion"
-                    color="error">
+                    color="error"
+                    variant="outlined"
+                    class="mr-3">
                 Cerrar Sesión
             </v-btn>
         </v-app-bar>

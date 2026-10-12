@@ -5,6 +5,7 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
+
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
@@ -60,6 +61,38 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Logout correcto'
         ]);
+    }
+
+        public function registro(Request $request) {
+        
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'ci' => 'required|string|max:20',
+            'telefono' => 'required|string|max:30',
+            'email' => 'required|email|unique:usuarios,email',
+            'password' => 'required|string|min:8', 
+            'activo' => 'required|boolean', 
+            'permisos' => 'sometimes|array',
+            'permisos.*' => 'integer|exists:permisos,id'
+        ]);
+
+        $usuario = Usuario::create([
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'ci' => $request->ci,
+            'telefono' => $request->telefono,
+            'email' => $request->email,
+            'password' => $request->password,
+            'activo' => $request->activo
+        ]);
+
+        $usuario->permisos()->sync($request->input('permisos', []));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Usuario registrado correctamente'
+        ], 201);
     }
 
 }
