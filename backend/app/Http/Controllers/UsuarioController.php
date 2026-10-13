@@ -23,7 +23,11 @@ class UsuarioController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
-            'ci' => 'required|string|max:20',
+            'ci' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('usuarios','ci')->ignore($usuario->id)],
             'telefono' => 'required|string|max:30',
             'email' => [
                 'required',

@@ -63,12 +63,12 @@ class AuthController extends Controller
         ]);
     }
 
-        public function registro(Request $request) {
+    public function registro(Request $request) {
         
         $request->validate([
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
-            'ci' => 'required|string|max:20',
+            'ci' => 'required|string|max:20|unique:usuarios,ci',
             'telefono' => 'required|string|max:30',
             'email' => 'required|email|unique:usuarios,email',
             'password' => 'required|string|min:8', 
@@ -93,6 +93,22 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Usuario registrado correctamente'
         ], 201);
+    }
+
+    public function editPassword($id, Request $request) {
+        
+        $usuario = Usuario::findOrFail($id);
+        $request->validate([
+            'password' => 'required|string|min:8'
+        ]);
+
+        $usuario->update([
+            'password' => $request->password 
+        ]);
+        
+        return response()->json([
+            'message' => 'Constraseña restablecida'
+        ]);
     }
 
 }

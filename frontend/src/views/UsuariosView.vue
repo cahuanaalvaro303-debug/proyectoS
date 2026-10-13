@@ -21,10 +21,24 @@
     const password = ref('12345678')
     const activo = ref(true)
     const usuarioId = ref('')
+    const requerido = value => !!value || 'Este campo es obligatorio'
+
+    const formularioNuevo = ref(null)
+    const formularioEditInfo = ref (null)
 
     const permisosSeleccionados = ref([])
 
     const itemsPermisos = ref([])
+
+    const headers = [
+        {title: 'Nombres', key: 'nombre', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'Apellidos', key: 'apellido', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'C.I.', key: 'ci', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'Teléfono', key: 'telefono', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'Correo Electrónico', key: 'email', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'Estado', key: 'activo', align: 'center', headerProps: {class: 'font-weight-bold'}},
+        {title: 'Acciones', key: 'acciones', align: 'center', headerProps: {class: 'font-weight-bold'}}
+    ]
 
     const cargarUsuarios = async () => {
         cargando.value = true
@@ -76,6 +90,12 @@
     }
 
     const guardarNuevoUsuario = async () => {
+
+        const { valid } = await formularioNuevo.value.validate()
+
+        if(!valid){
+            return
+        }
         cargando.value = true
         error.value = null
         
@@ -94,9 +114,10 @@
             await api.post('/registro', datos)
             permisosSeleccionados.value = []
             router.push('/menu/usuarios')
+            limpiar()
         } catch (err) {
             error.value = err.response?.data?.message || 
-                'Error al guardas nuevo usuario'
+                'Error al guardar nuevo usuario'
             alert(error.value)
         } finally {
             cargando.value = false
@@ -104,6 +125,11 @@
     }
 
     const guardarEditUsuario = async () => {
+
+        const { valid } = await formularioEditInfo.value.validate()
+
+        if (!valid)
+            return
         cargando.value = true
         error.value = null
             const datos = {
@@ -117,6 +143,7 @@
         try {
             await api.patch(`/usuarios/${usuarioId.value}`, datos)
             router.push('/menu/usuarios')
+            limpiar()
         } catch (err) {
             error.value = err.response?.data?.message || 
                 'Error al guardar cambios de usuario'
@@ -127,6 +154,7 @@
     }
     
     const guardarEditPermisos = async () =>{
+
         cargando.value = true
         error.value = null
         try {
@@ -142,20 +170,26 @@
         }
     }
 
-    const headers = [
-        {title: 'Nombres', key: 'nombre', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'Apellidos', key: 'apellido', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'C.I.', key: 'ci', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'Teléfono', key: 'telefono', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'Correo Electrónico', key: 'email', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'Estado', key: 'activo', align: 'center', headerProps: {class: 'font-weight-bold'}},
-        {title: 'Acciones', key: 'acciones', align: 'center', headerProps: {class: 'font-weight-bold'}}
-    ]
+    const guardarEditPassword = async () => {
+        cargando.value = true
+        error.value = null
+        try {
+            await api.patch(`/usuarios/${usuarioId.value}/password`, {
+                password: '12345678'
+            })
+            router.push('/menu/usuarios')
+            alert('Contraseña restablecida correctamente')
 
-    function cancelar() {
-        dialogNuevo.value = false
-        dialogEditInfo.value = false
-        dialogEditPerm.value = false
+        } catch (err) {
+            error.value = err.response?.data?.message || 
+                'Error al Restaurar la Contraseña'
+            alert(error.value)
+        } finally {
+            cargando.value = false
+        }
+    }
+
+    function limpiar() {
         nombre.value = ''
         apellido.value = ''
         ci.value = ''
@@ -163,7 +197,10 @@
         email.value = ''
         activo.value = true
         permisosSeleccionados.value = []
-        return       
+        dialogNuevo.value = false
+        dialogEditInfo.value = false
+        dialogEditPerm.value = false
+        return
     }
 
 
@@ -183,6 +220,7 @@
                             <v-btn 
                             prepend-icon="mdi-account-plus"
                             color="success mr-5"
+                            :loading="cargando"
                             @click="dialogNuevo = true;  cargarPermisos()">REGISTRAR NUEVO USUARIO</v-btn>
                     </v-card-title>
                     <v-divider></v-divider>
@@ -202,14 +240,18 @@
                                 <v-btn 
                                     prepend-icon="mdi-pencil"
                                     color="error"
+                                    :loading="cargando"
                                     @click="dialogEditInfo = true; cargarUsuario(item); cargarPermisos()">Información</v-btn>
                                 <v-btn
                                     prepend-icon="mdi-shield-key"
                                     color="warning"
+                                    :loading="cargando"
                                     @click="dialogEditPerm = true; cargarUsuario(item); cargarPermisos()">Permisos</v-btn>
                                 <v-btn
                                 prepend-icon="mdi-key"
-                                color="primary">
+                                color="primary"
+                                :loading="cargando"
+                                @click="cargarUsuario(item); guardarEditPassword(); limpiar() ">
                                     Restaurar Contraseña
                                 </v-btn>
                             </template>
@@ -226,36 +268,43 @@
 
     <v-dialog v-model="dialogNuevo"
               max-width="500">
-        <v-form @submit="guardarNuevoUsuario">
+        <v-form 
+        ref="formularioNuevo"
+        @submit="guardarNuevoUsuario()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold ma-2">
                     NUEVO USUARIO
                     <v-spacer></v-spacer>
                     <v-btn
                     icon="mdi-close"
-                    @click="cancelar"></v-btn>
+                    @click="limpiar()"></v-btn>
                 </v-card-title>
 
                 <v-card-text>
                     <v-text-field
                     label="Nombre"
-                    v-model="nombre"></v-text-field>
+                    v-model="nombre"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field 
                     label="Apellido"
-                    v-model="apellido"/>
+                    v-model="apellido"
+                    :rules="[requerido]"/>
 
                     <v-text-field
                     label="C.I."
-                    v-model="ci"></v-text-field>
+                    v-model="ci"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field
                     label="Telefono/Celular"
-                    v-model="telefono"></v-text-field>
+                    v-model="telefono"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field
                     label="Correo Electrónico"
-                    v-model="email"></v-text-field>
+                    v-model="email"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field
                     label="Contraseña"
@@ -288,12 +337,13 @@
                     prepend-icon="mdi-account-plus"
                     color="success"
                     variant="outlined"
-                    type="submit">Guardar</v-btn>
+                    type="submit"
+                    :loading="cargando">Guardar</v-btn>
                     <v-btn
                     prepend-icon="mdi-close"
                     color="error"
                     variant="outlined"
-                    @click="cancelar()">Cancelar</v-btn>
+                    @click="limpiar()">Cancelar</v-btn>
                 </v-card-actions>
             </v-card>
         </v-form>
@@ -301,35 +351,42 @@
 
     <v-dialog v-model="dialogEditInfo"
               max-width="700">
-        <v-form @submit="guardarEditUsuario">
+        <v-form 
+        ref="formularioEditInfo"
+        @submit="guardarEditUsuario()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold">
                     EDITAR USUARIO
                     <v-spacer></v-spacer>
                     <v-btn 
                     icon="mdi-close"
-                    @click="dialogEditInfo = false;"></v-btn>
+                    @click="limpiar()"></v-btn>
                 </v-card-title>
                 <v-card-text>
                     <v-text-field
                     label="Nombre"
-                    v-model="nombre"></v-text-field>
+                    v-model="nombre"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field 
                     label="Apellido"
-                    v-model="apellido"/>
+                    v-model="apellido"
+                    :rules="[requerido]"/>
 
                     <v-text-field
                     label="C.I."
-                    v-model="ci"></v-text-field>
+                    v-model="ci"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field
                     label="Telefono/Celular"
-                    v-model="telefono"></v-text-field>
+                    v-model="telefono"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-text-field
                     label="Correo Electrónico"
-                    v-model="email"></v-text-field>
+                    v-model="email"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-switch
                     :label="activo ? 'Usuario: Activo' : 'Usuario: Inactivo'"
@@ -343,12 +400,13 @@
                     prepend-icon="mdi-content-save"
                     color="success"
                     variant="outlined"
+                    :loading="cargando"
                     type="submit">Guardar Cambios</v-btn>
                     <v-btn
                     prepend-icon="mdi-close"
                     color="error"
                     variant="outlined"
-                    @click="cancelar()">Cancelar</v-btn>
+                    @click="limpiar()">Cancelar</v-btn>
                 </v-card-actions>
             </v-card>
         </v-form>
@@ -356,14 +414,14 @@
 
     <v-dialog v-model="dialogEditPerm"
               max-width="500">
-        <v-form @submit="guardarEditPermisos">
+        <v-form @submit="guardarEditPermisos(); limpiar()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold">
                     EDITAR PERMISOS
                     <v-spacer></v-spacer>
                     <v-btn
                     icon="mdi-close"
-                    @click="dialogEditPerm = false"></v-btn>
+                    @click="limpiar()"></v-btn>
                 </v-card-title>
 
                 <v-card-text>
@@ -384,12 +442,13 @@
                     color="success"
                     variant="outlined"
                     type="submit"
+                    :loading="cargando"
                     >Guardar Cambios</v-btn>
                     <v-btn
                     prepend-icon="mdi-close"
                     color="error"
                     variant="outlined"
-                    @click="cancelar()"
+                    @click="limpiar()"
                     >Cancelar</v-btn>
                 </v-card-actions>
             </v-card>
