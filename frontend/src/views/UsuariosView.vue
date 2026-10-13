@@ -69,7 +69,6 @@
         email.value = item.email
         activo.value = item.activo
         usuarioId.value = item.id 
-        permisosSeleccionados.value = item.permisos.nombre
         permisosSeleccionados.value = item.permisos.map(
         permiso => Number(permiso.id)
     )
@@ -131,14 +130,15 @@
         cargando.value = true
         error.value = null
         try {
-            await api.patch('/usuarios/${usuarioId.value}', permisosSeleccionados.value)
+            await api.patch(`/usuarios/${usuarioId.value}/permisos`, {permisos: permisosSeleccionados.value})
+            permisosSeleccionados.value = []
             router.push('/menu/usuarios')
         } catch (err) {
             error.value = err.response?.data?.message ||
                 'Error al editar permisos'
             alert(error.value)
         } finally {
-            cargando.value = null
+            cargando.value = false
         }
     }
 
@@ -356,7 +356,7 @@
 
     <v-dialog v-model="dialogEditPerm"
               max-width="500">
-        <v-form>
+        <v-form @submit="guardarEditPermisos">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold">
                     EDITAR PERMISOS

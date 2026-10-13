@@ -16,7 +16,7 @@ class PermisoSeeder extends Seeder
     public function run(): void
     {
         //
-            $permisos = [
+        $permisos = [
             [
                 'nombre' => 'Dashboard',
                 'codigo' => 'dashboard',
@@ -71,7 +71,14 @@ class PermisoSeeder extends Seeder
             );
         }
 
-        $usuario = Usuario::find(1);
+        $usuario = Usuario::where(
+            'email',
+            'admin@proyecto.com'
+        )->firstOrFail();
+
+        $usuario->permisos()->sync(
+            Permiso::pluck('id')->all()
+        );
 
         if ($usuario) {
             $usuario->permisos()->sync(

@@ -10,13 +10,15 @@ use Illuminate\Validation\Rule;
 class UsuarioController extends Controller
 {
     //
-    public function index() {
+    public function index()
+    {
         $usuarios = Usuario::all();
-        $usuarios->load('permisos');        
+        $usuarios->load('permisos');
         return UsuarioResource::collection($usuarios);
     }
 
-    public function editar($id, Request $request) {
+    public function editar($id, Request $request)
+    {
         $usuario = Usuario::findOrFail($id);
         $request->validate([
             'nombre' => 'required|string|max:100',
@@ -28,7 +30,7 @@ class UsuarioController extends Controller
                 'email',
                 Rule::unique('usuarios', 'email')->ignore($usuario->id)
             ],
-            'activo' => 'required|boolean', 
+            'activo' => 'required|boolean',
         ]);
 
         $usuario->update([
@@ -44,5 +46,20 @@ class UsuarioController extends Controller
             'success' => true,
             'message' => 'Cambios realizado correctamente'
         ], 200);
+    }
+
+    public function editarPermisos($id, Request $request)
+    {
+        $usuario = Usuario::findOrFail($id);
+        $request->validate([
+            'permisos' => 'sometimes|array',
+            'permisos.*' => 'integer|exists:permisos,id'
+        ]);
+        $usuario->permisos()->sync($request->input('permisos', []));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cambios realizado correctamente'
+        ]);
     }
 }
