@@ -1,7 +1,7 @@
 <script setup>
 import api from '../services/api';
 import { onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import {  useRouter } from 'vue-router';
 
 const error = ref('')
 const cargando = ref(false)
@@ -15,6 +15,12 @@ const anio = ref('')
 const color = ref('')
 const activo = ref(true)
 const tipoSeleccionado = ref('')
+
+const formularioNuevo = ref(null)
+const formularioEdit = ref(null)
+const requerido = value => !!value || 'Este campo es requerido' 
+
+const router = useRouter()
 
 const headers = [
     {title: 'Placa', key: 'placa', align: 'center', headerProps: {class: 'font-weight-bold'}},
@@ -49,6 +55,10 @@ const cargarTipos = async () => {
 }
 
 const guardarNuevoVehiculo = async () => {
+
+    const { valid } = await formularioNuevo.value.validate()
+    if(!valid)
+        return
     cargando.value = true
     error.value = null
 
@@ -58,19 +68,23 @@ const guardarNuevoVehiculo = async () => {
         modelo: modelo.value,
         anio: anio.value,
         color: color.value,
-        tipoSeleccionado: tipoSeleccionado.value,
+        tipo_vehiculo_id: tipoSeleccionado.value,
         activo: activo.value
     }
     
     try {
-
+        await api.post('/vehiculos', datos)
+        limpiar()
+        router.push('/menu/vehiculos')
     } catch (err) {
-
+        error.value = err.response?.data?.message || 
+            'Error al guardar nuevo vehículo'
     } finally {
         cargando.value = false
     }
 }
 
+onMounted(()=>{})
 </script>
 
 <template>
@@ -106,7 +120,9 @@ const guardarNuevoVehiculo = async () => {
     <v-dialog
     v-model="dialogNuevo"
     max-width="450">
-        <v-form>
+        <v-form
+        ref="formularioNuevo"
+        @submit="guardarNuevoVehiculo()">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     NUEVO VEHÍCULO
@@ -120,19 +136,24 @@ const guardarNuevoVehiculo = async () => {
                 <v-card-text>
                     <v-text-field
                     label="Placa" 
-                    v-model="placa"></v-text-field>
+                    v-model="placa"
+                    :rules="[requerido]"></v-text-field>
                     <v-text-field
                     label="Marca" 
-                    v-model="marca"></v-text-field>
+                    v-model="marca"
+                    :rules="[requerido]"></v-text-field>
                     <v-text-field
                     label="Modelo" 
-                    v-model="modelo"></v-text-field>
+                    v-model="modelo"
+                    :rules="[requerido]"></v-text-field>
                     <v-text-field
                     label="Año" 
-                    v-model="anio"></v-text-field>
+                    v-model="anio"
+                    :rules="[requerido]"></v-text-field>
                     <v-text-field
                     label="Color" 
-                    v-model="color"></v-text-field>
+                    v-model="color"
+                    :rules="[requerido]"></v-text-field>
 
                     <v-select
                     label="Tipo de Vehículo"
@@ -140,7 +161,8 @@ const guardarNuevoVehiculo = async () => {
                     item-title="nombre"
                     item-value="id"
                     clearable
-                    v-model="tipoSeleccionado"></v-select>
+                    v-model="tipoSeleccionado"
+                    :rules="[requerido]"></v-select>
 
                     <v-switch
                     :label="activo ? 'Vehículo: activo' : 'Vehículo: inactivo'"
@@ -158,7 +180,8 @@ const guardarNuevoVehiculo = async () => {
                     <v-btn 
                     prepend-icon="mdi-close"
                     color="error"
-                    variant="outlined">Cancelar</v-btn>
+                    variant="outlined"
+                    @click="limpiar()">Cancelar</v-btn>
                 </v-card-actions>
             </v-card>
         </v-form>

@@ -13,7 +13,7 @@ const descripcion = ref('')
 const activo = ref(true)
 const idTipo = ref('')
 
-const formulariNuevo = ref(null)
+const formularioNuevo = ref(null)
 const formularioEdit = ref(null)
 
 const requerido = value => !!value || 'Este campo es requerido'
@@ -58,7 +58,7 @@ const cargarTipo = (item) => {
 
 const guardarNuevoTipo = async () => {
 
-    const { valid } = await formulariNuevo.value.validate()
+    const { valid } = await formularioNuevo.value.validate()
 
     if(!valid)
         return

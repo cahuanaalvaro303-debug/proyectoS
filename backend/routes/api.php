@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\TipoVehiculoController;
+use App\Http\Controllers\VehiculoController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -36,6 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/tipos_vehiculos', [TipoVehiculoController::class, 'index']);
     Route::post('/tipos_vehiculos', [TipoVehiculoController::class, 'registro']);
     Route::put('/tipos_vehiculos/{id}', [TipoVehiculoController::class, 'editarInfo']);
+
+    //Vehiculos
+    Route::post('/vehiculos', [VehiculoController::class, 'registro']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
