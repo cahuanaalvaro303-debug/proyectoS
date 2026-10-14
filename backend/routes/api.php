@@ -39,7 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/tipos_vehiculos/{id}', [TipoVehiculoController::class, 'editarInfo']);
 
     //Vehiculos
+    Route::get('/vehiculos', [VehiculoController::class, 'index']);
     Route::post('/vehiculos', [VehiculoController::class, 'registro']);
+    Route::put('/vehiculos/{id}', [VehiculoController::class, 'editInfo']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
