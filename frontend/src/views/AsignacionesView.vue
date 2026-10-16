@@ -157,7 +157,7 @@ onMounted(()=>{cargarAsignaciones();})
                         <v-btn
                         prepend-icon="mdi-plus"
                         color="success mr-5"
-                        @click="dialogEdit = true; cargarUsuarios(); cargarVehiculos()">NUEVA ASIGNACIÓN</v-btn>
+                        @click="dialogNuevo = true; cargarUsuarios(); cargarVehiculos()">NUEVA ASIGNACIÓN</v-btn>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text>
@@ -216,7 +216,7 @@ onMounted(()=>{cargarAsignaciones();})
     >
         <v-form
         ref="formularioNuevo"
-        @submit.prevent="guardarNuevaAsignacion">
+        @submit="guardarNuevaAsignacion">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     NUEVA ASIGNACIÓN
