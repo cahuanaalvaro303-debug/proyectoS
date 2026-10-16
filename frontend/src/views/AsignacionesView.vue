@@ -19,7 +19,11 @@ const observacionesEntrega = ref('')
 const observacionesDev = ref('')
 const activo = ref(true)
 const formularioNuevo = ref(null)
+const formularioEdit = ref(null)
+const formularioDesasig = ref(null)
 const asignaciones = ref([])
+const idAsignacion = ref('')
+const asignacionSeleccionada = ref(null)
 
 const requerido = value => !!value || 'Este campo es requerido' 
 
@@ -51,12 +55,12 @@ const cargarAsignaciones = async () => {
     }
 }
 
-const cargarUsuarios = async () => {
+const cargarUsuariosActivos = async () => {
         cargando.value = true
         error.value = null
 
         try {
-            const respuesta = await api.get('/usuarios')
+            const respuesta = await api.get('/usuarios/activos')
 
             usuarios.value = respuesta.data.data
 
@@ -70,11 +74,11 @@ const cargarUsuarios = async () => {
         }
 }
 
-const cargarVehiculos = async () => {
+const cargarVehiculosActivos = async () => {
     cargando.value = true
     error.value = null
     try {
-        const respuesta = await api.get('/vehiculos')
+        const respuesta = await api.get('/vehiculos/activos')
         vehiculos.value = respuesta.data
         
     } catch (err) {
@@ -84,6 +88,19 @@ const cargarVehiculos = async () => {
     } finally{
         cargando.value = false
     }
+}
+
+function cargarAsignacion(item){
+    asignacionSeleccionada.value = item
+    usuarioSeleccionado.value = item.usuario.id
+    vehiculoSeleccionado.value = item.vehiculo.id
+    fechaInicio.value = item.fecha_inicio
+    fechaFin.value = item.fecha_fin
+    observacionesEntrega.value = item.observaciones_entrega
+    observacionesDev.value = item.observaciones_devolucion
+    activo.value = item.activo
+    idAsignacion.value = item.id
+    return
 }
 
 function limpiar() {
@@ -115,8 +132,7 @@ const guardarNuevaAsignacion = async () => {
         fecha_inicio: fechaInicio.value,
         fecha_fin: null,
         observaciones_entrega: observacionesEntrega.value,
-        observaciones_devolucion: null,
-        activo: activo.value
+        observaciones_devolucion: null
     }
 
     try {
@@ -142,6 +158,58 @@ const formatearFecha = (fechaRaw) =>{
         year: 'numeric'
     }).format(fecha)
 }
+
+const guardarEditAsig = async () => {
+
+    const { valid } = await formularioEdit.value.validate()
+    if(!valid)
+        return
+    cargando.value = true
+    error.value = null
+
+    const datos = {
+        usuario_id: usuarioSeleccionado.value,
+        vehiculo_id: vehiculoSeleccionado.value,
+        observaciones_entrega: observacionesEntrega.value
+    }
+    try {
+        await api.patch(`/asignaciones/${idAsignacion.value}`, datos)
+        limpiar()
+        router.push('/menu/asignaciones')
+    } catch (err) {
+        error.value = err.response?.data?.message || 
+            'No se pudo actualizar datos'
+        alert.value(error.value)
+    } finally {
+        cargando.value = false
+    }
+}
+const guardarDesasignacion = async () => {
+
+    const { valid } = await formularioDesasig.value.validate()
+
+    if(!valid)
+        return 
+    cargando.value = true
+    error.value = null
+    const datos = {
+
+        observaciones_devolucion: observacionesDev.value,
+    }
+    try {
+        const respuesta = await api.patch(`/asignaciones/${idAsignacion.value}/desasignar`, datos)
+        console.log('Respuesta', respuesta.data.message)
+        //router.push('/menu/asignaciones')
+        limpiar()
+    } catch (err) {
+        error.value = err.response?.data?.message || 
+            'No se pudo realizar la desasignacion'
+        alert(error.value)
+    }  finally {
+        cargando.value = false
+    }
+}
+
 onMounted(()=>{cargarAsignaciones();})
 
 </script>
@@ -157,7 +225,7 @@ onMounted(()=>{cargarAsignaciones();})
                         <v-btn
                         prepend-icon="mdi-plus"
                         color="success mr-5"
-                        @click="dialogNuevo = true; cargarUsuarios(); cargarVehiculos()">NUEVA ASIGNACIÓN</v-btn>
+                        @click="dialogNuevo = true; cargarUsuariosActivos(); cargarVehiculosActivos()">NUEVA ASIGNACIÓN</v-btn>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text>
@@ -168,11 +236,18 @@ onMounted(()=>{cargarAsignaciones();})
                         <v-btn
                         prepend-icon="mdi-pencil"
                         color="error"
-                        @click="dialogEdit = true">Editar Asignación</v-btn>
+                        :disabled="!item.activo"
+                        @click="dialogEdit = true; cargarUsuariosActivos(); cargarVehiculosActivos(); cargarAsignacion(item)">
+                        Editar Información
+                        </v-btn>
                         <v-btn
                         prepend-icon="mdi-car-off"
                         color="warning"
-                        @click="dialogDesasig = true">Desasignar</v-btn>
+                        :disabled="!item.activo"
+                        @click="dialogDesasig = true; cargarAsignacion(item)">
+                            <span v-if="item.activo">Desasignar</span>
+                            <span v-else>Desasignado</span>
+                        </v-btn>
                     </template>
 
                     <template #item.usuario.nombre="{ item }">
@@ -259,10 +334,6 @@ onMounted(()=>{cargarAsignaciones();})
                     clearable
                     :rules="[requerido]"></v-date-input>
 
-                    <v-switch
-                    :label="activo ? 'Asignación: activo' : 'Asignación: inactivo'"
-                    :color="activo ? 'success' : 'error'"
-                    v-model="activo"></v-switch>
                 </v-card-text> 
 
                 <v-card-actions>
@@ -286,7 +357,9 @@ onMounted(()=>{cargarAsignaciones();})
     v-model="dialogEdit"
     max-width="450"
     >
-        <v-form>
+        <v-form
+        ref="formularioEdit"
+        @submit="guardarEditAsig()">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     EDITAR ASIGNACIÓN
@@ -321,11 +394,6 @@ onMounted(()=>{cargarAsignaciones();})
                     label="Observaciones Entrega" 
                     v-model="observacionesEntrega"
                     :rules="[requerido]"></v-text-field>
-                    
-                    <v-switch
-                    :label="activo ? 'Asignación: activo' : 'Asignación: inactivo'"
-                    :color="activo ? 'success' : 'error'"
-                    v-model="activo"></v-switch>
                 </v-card-text> 
 
                 <v-card-actions>
@@ -334,7 +402,7 @@ onMounted(()=>{cargarAsignaciones();})
                     color="success"
                     type="submit"
                     variant="outlined"
-                    >Guardar</v-btn>
+                    >Guardar Cambios</v-btn>
                     <v-btn 
                     prepend-icon="mdi-close"
                     color="error"
@@ -345,4 +413,60 @@ onMounted(()=>{cargarAsignaciones();})
         </v-form>
     </v-dialog>
 
+    <v-dialog
+    v-model="dialogDesasig"
+    max-width="450"
+    >
+        <v-form
+        ref="formularioDesasig"
+        @submit="guardarDesasignacion()">
+            <v-card>
+                <v-card-title class="align-center d-flex w-100 font-weight-bold mt-3 mr-3 ml-3">
+                    DESASIGNAR
+                    <v-spacer></v-spacer>
+                    <v-btn
+                    icon="mdi-close"
+                    class="mr-2"
+                    @click="limpiar()"></v-btn>
+                </v-card-title>
+                
+                <v-card-text>
+                    
+                    <div class="mb-3">
+                        <div class="text-caption text-medium-emphasis">Usuario</div>
+                        <div class="text-body-1">
+                        {{ asignacionSeleccionada?.usuario?.nombre }} {{ asignacionSeleccionada?.usuario?.apellido }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-caption text-medium-emphasis">Vehículo</div>
+                        <div class="text-body-1">
+                        {{ asignacionSeleccionada?.vehiculo?.tipo_vehiculo?.nombre ?? '' }} - {{ asignacionSeleccionada?.vehiculo?.placa }}
+                        </div>
+                    </div>
+
+                    <v-text-field
+                    label="Observaciones Devolución" 
+                    v-model="observacionesDev"
+                    :rules="[requerido]"></v-text-field>
+                    
+                </v-card-text> 
+
+                <v-card-actions>
+                    <v-btn 
+                    prepend-icon="mdi-plus"
+                    color="success"
+                    type="submit"
+                    variant="outlined"
+                    >Aceptar Desasignación</v-btn>
+                    <v-btn 
+                    prepend-icon="mdi-close"
+                    color="error"
+                    variant="outlined"
+                    @click="limpiar()">Cancelar</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-form>
+    </v-dialog>
 </template>

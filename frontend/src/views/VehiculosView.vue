@@ -48,11 +48,11 @@ function limpiar() {
     return
 }
 
-const cargarTipos = async () => {
+const cargarTiposActivos = async () => {
     cargando.value = true
     error.value = null
     try {
-        const respuesta = await api.get('/tipos_vehiculos')
+        const respuesta = await api.get('/tipos_vehiculos/activos')
         tipos.value = respuesta.data
     } catch (err) {
         error.value = err.response?.data?.message || 
@@ -163,7 +163,7 @@ onMounted(()=>{cargarVehiculos()})
                         <v-btn
                         prepend-icon="mdi-plus"
                         color="success mr-5"
-                        @click="dialogNuevo = true; cargarTipos()">NUEVO VEHÍCULO</v-btn>
+                        @click="dialogNuevo = true; cargarTiposActivos()">NUEVO VEHÍCULO</v-btn>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text>

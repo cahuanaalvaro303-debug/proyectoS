@@ -14,6 +14,12 @@ class TipoVehiculoController extends Controller
         return response()->json($tiposVehiculos);
     }
 
+    public function tiposActivos() {
+        $tiposVehiculos = TipoVehiculo::where('activo', true)->get();
+
+        return response()->json($tiposVehiculos);
+    }
+
     public function registro (Request $request) {
         $request->validate([
             'nombre' => 'required|string|max:100',

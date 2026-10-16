@@ -15,6 +15,12 @@ class VehiculoController extends Controller
         return response()->json($vehiculos);
     }
 
+    public function vehiculosActivos() {
+        $vehiculos = Vehiculo::where('activo', true)->with('tipoVehiculo')->get();
+
+        return response()->json($vehiculos);
+    }
+
     public function registro(Request $request)
     {
 

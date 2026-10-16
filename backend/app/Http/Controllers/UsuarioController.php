@@ -17,6 +17,12 @@ class UsuarioController extends Controller
         return UsuarioResource::collection($usuarios);
     }
 
+     public function usuariosActivos()
+    {
+        $usuarios = Usuario::where('activo', true)->get();;
+        return UsuarioResource::collection($usuarios);
+    }
+
     public function editar($id, Request $request)
     {
         $usuario = Usuario::findOrFail($id);

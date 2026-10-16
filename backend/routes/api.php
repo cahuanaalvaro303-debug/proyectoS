@@ -28,6 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Usuarios
     Route::get('/usuarios', [UsuarioController::class, 'index']);
+    Route::get('/usuarios/activos', [UsuarioController::class, 'usuariosActivos']);
     Route::patch('/usuarios/{id}', [UsuarioController::class, 'editar']);
     Route::patch('/usuarios/{id}/permisos', [UsuarioController::class, 'editarPermisos']);
 
@@ -36,17 +37,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Tipos de Vehiculos
     Route::get('/tipos_vehiculos', [TipoVehiculoController::class, 'index']);
+    Route::get('/tipos_vehiculos/activos', [TipoVehiculoController::class, 'tiposActivos']);
     Route::post('/tipos_vehiculos', [TipoVehiculoController::class, 'registro']);
     Route::put('/tipos_vehiculos/{id}', [TipoVehiculoController::class, 'editarInfo']);
 
     //Vehiculos
     Route::get('/vehiculos', [VehiculoController::class, 'index']);
+    Route::get('/vehiculos/activos', [VehiculoController::class, 'vehiculosActivos']);
     Route::post('/vehiculos', [VehiculoController::class, 'registro']);
     Route::put('/vehiculos/{id}', [VehiculoController::class, 'editInfo']);
 
     //Asignaciones
     Route::get('/asignaciones', [AsignacionController::class, 'index']);
     Route::post('/asignaciones', [AsignacionController::class, 'registro']);
+    Route::patch('/asignaciones/{id}', [AsignacionController::class, 'editarInfo']);
+    Route::patch('/asignaciones/{id}/desasignar', [AsignacionController::class, 'desasignar']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);
