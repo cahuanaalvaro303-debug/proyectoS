@@ -75,8 +75,8 @@ const guardarNuevoTipo = async () => {
     }
     try {
         await api.post('/tipos_vehiculos', datos)
-        router.push('/menu/tipos_vehiculo')
         limpiar()
+        await cargarTiposVehiculos()
     } catch(err) {
         error.value = err.response?.data?.message || 
             'Error al guardar nuevo tipo de vehículo'
@@ -106,8 +106,8 @@ const guardarEditInfo = async () => {
 
     try {
         await api.put(`/tipos_vehiculos/${idTipo.value}`, datos)
-        router.push('/menu/tipos_vehiculo')
         limpiar()
+        await cargarTiposVehiculos()
     } catch (err) {
         error.value = err.response?.data?.message ||
             'Error al guardar cambios'
@@ -147,7 +147,6 @@ onMounted(() => {cargarTiposVehiculos()})
                                 <v-btn
                                 prepend-icon="mdi-pencil"
                                 color="error"
-                                :loading="cargando"
                                 @click="dialogEditInfo = true; cargarTipo(item)">
                                     Editar Información
                                 </v-btn>
@@ -163,7 +162,7 @@ onMounted(() => {cargarTiposVehiculos()})
     v-model="dialogNuevo">
         <v-form
             ref="formularioNuevo"
-            @submit="guardarNuevoTipo();">
+            @submit.prevent="guardarNuevoTipo();">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold ma-2">
                     NUEVO TIPO DE VEHÍCULO
@@ -212,7 +211,7 @@ onMounted(() => {cargarTiposVehiculos()})
     max-width="500">
         <v-form
         ref="formularioEdit"
-        @submit="guardarEditInfo();">
+        @submit.prevent="guardarEditInfo();">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold ma-2">
                     EDITAR TIPO DE VEHÍCULO

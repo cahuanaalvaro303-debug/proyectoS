@@ -1,11 +1,9 @@
 <script setup>
 import api from '../services/api';
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 
 const cargando = ref(false)
 const error = ref('')
-const router = useRouter()
 const dialogNuevo = ref(false)
 const dialogEdit = ref(false)
 const dialogDesasig = ref(false)
@@ -138,7 +136,7 @@ const guardarNuevaAsignacion = async () => {
     try {
         await api.post('/asignaciones', datos)
         limpiar()
-        router.push('/menu/asignaciones')
+        await cargarAsignaciones()
     } catch(err) {
         error.value = err.response?.data?.message || 
               'No se pudo guardar nueva asignación'
@@ -175,11 +173,11 @@ const guardarEditAsig = async () => {
     try {
         await api.patch(`/asignaciones/${idAsignacion.value}`, datos)
         limpiar()
-        router.push('/menu/asignaciones')
+        await cargarAsignaciones()
     } catch (err) {
         error.value = err.response?.data?.message || 
             'No se pudo actualizar datos'
-        alert.value(error.value)
+        alert(error.value)
     } finally {
         cargando.value = false
     }
@@ -199,8 +197,8 @@ const guardarDesasignacion = async () => {
     try {
         const respuesta = await api.patch(`/asignaciones/${idAsignacion.value}/desasignar`, datos)
         console.log('Respuesta', respuesta.data.message)
-        //router.push('/menu/asignaciones')
         limpiar()
+        await cargarAsignaciones()
     } catch (err) {
         error.value = err.response?.data?.message || 
             'No se pudo realizar la desasignacion'
@@ -291,7 +289,7 @@ onMounted(()=>{cargarAsignaciones();})
     >
         <v-form
         ref="formularioNuevo"
-        @submit="guardarNuevaAsignacion">
+        @submit.prevent="guardarNuevaAsignacion">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     NUEVA ASIGNACIÓN
@@ -359,7 +357,7 @@ onMounted(()=>{cargarAsignaciones();})
     >
         <v-form
         ref="formularioEdit"
-        @submit="guardarEditAsig()">
+        @submit.prevent="guardarEditAsig">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     EDITAR ASIGNACIÓN
@@ -419,7 +417,7 @@ onMounted(()=>{cargarAsignaciones();})
     >
         <v-form
         ref="formularioDesasig"
-        @submit="guardarDesasignacion()">
+        @submit.prevent="guardarDesasignacion">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold mt-3 mr-3 ml-3">
                     DESASIGNAR

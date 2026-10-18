@@ -112,7 +112,7 @@ const guardarNuevoVehiculo = async () => {
     try {
         await api.post('/vehiculos', datos)
         limpiar()
-        router.push('/menu/vehiculos')
+        await cargarVehiculos()
     } catch (err) {
         error.value = err.response?.data?.message || 
             'Error al guardar nuevo vehículo'
@@ -140,7 +140,7 @@ const guardarEditInfo = async () => {
     try {
         await api.put(`/vehiculos/${idVehiculo.value}`, datos)
         limpiar()
-        router.push('/menu/vehiculos')
+        await cargarVehiculos()
     } catch (err) {
         error.value = err.response?.data?.message ||
             'No se pudo guardar los cambios'
@@ -193,7 +193,7 @@ onMounted(()=>{cargarVehiculos()})
     max-width="450">
         <v-form
         ref="formularioNuevo"
-        @submit="guardarNuevoVehiculo()">
+        @submit.prevent="guardarNuevoVehiculo()">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     NUEVO VEHÍCULO
@@ -246,6 +246,7 @@ onMounted(()=>{cargarVehiculos()})
                     prepend-icon="mdi-plus"
                     color="success"
                     type="submit"
+                    :loading="cargando"
                     variant="outlined"
                     >Guardar</v-btn>
                     <v-btn 
@@ -263,7 +264,7 @@ onMounted(()=>{cargarVehiculos()})
     max-width="500">
         <v-form
         ref="formularioEdit"
-        @submit="guardarEditInfo()">
+        @submit.prevent="guardarEditInfo()">
             <v-card>
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     EDITAR VEHÍCULO
@@ -316,6 +317,7 @@ onMounted(()=>{cargarVehiculos()})
                     prepend-icon="mdi-plus"
                     color="success"
                     type="submit"
+                    :loading="cargando"
                     variant="outlined"
                     >Guardar Cambios</v-btn>
                     <v-btn 

@@ -113,8 +113,8 @@
         try {
             await api.post('/registro', datos)
             permisosSeleccionados.value = []
-            router.push('/menu/usuarios')
             limpiar()
+            await cargarUsuarios()
         } catch (err) {
             error.value = err.response?.data?.message || 
                 'Error al guardar nuevo usuario'
@@ -142,8 +142,8 @@
         }
         try {
             await api.patch(`/usuarios/${usuarioId.value}`, datos)
-            router.push('/menu/usuarios')
             limpiar()
+            await cargarUsuarios()
         } catch (err) {
             error.value = err.response?.data?.message || 
                 'Error al guardar cambios de usuario'
@@ -160,7 +160,7 @@
         try {
             await api.patch(`/usuarios/${usuarioId.value}/permisos`, {permisos: permisosSeleccionados.value})
             permisosSeleccionados.value = []
-            router.push('/menu/usuarios')
+            await cargarUsuarios()
         } catch (err) {
             error.value = err.response?.data?.message ||
                 'Error al editar permisos'
@@ -177,8 +177,9 @@
             await api.patch(`/usuarios/${usuarioId.value}/password`, {
                 password: '12345678'
             })
-            router.push('/menu/usuarios')
             alert('Contraseña restablecida correctamente')
+            limpiar()
+            await cargarUsuarios()
 
         } catch (err) {
             error.value = err.response?.data?.message || 
@@ -240,17 +241,14 @@
                                 <v-btn 
                                     prepend-icon="mdi-pencil"
                                     color="error"
-                                    :loading="cargando"
                                     @click="dialogEditInfo = true; cargarUsuario(item); cargarPermisos()">Información</v-btn>
                                 <v-btn
                                     prepend-icon="mdi-shield-key"
                                     color="warning"
-                                    :loading="cargando"
                                     @click="dialogEditPerm = true; cargarUsuario(item); cargarPermisos()">Permisos</v-btn>
                                 <v-btn
                                 prepend-icon="mdi-key"
                                 color="primary"
-                                :loading="cargando"
                                 @click="cargarUsuario(item); guardarEditPassword(); limpiar() ">
                                     Restaurar Contraseña
                                 </v-btn>
@@ -270,7 +268,7 @@
               max-width="500">
         <v-form 
         ref="formularioNuevo"
-        @submit="guardarNuevoUsuario()">
+        @submit.prevent="guardarNuevoUsuario()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold ma-2">
                     NUEVO USUARIO
@@ -353,7 +351,7 @@
               max-width="700">
         <v-form 
         ref="formularioEditInfo"
-        @submit="guardarEditUsuario()">
+        @submit.prevent="guardarEditUsuario()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold">
                     EDITAR USUARIO
@@ -414,7 +412,7 @@
 
     <v-dialog v-model="dialogEditPerm"
               max-width="500">
-        <v-form @submit="guardarEditPermisos(); limpiar()">
+        <v-form @submit.prevent="guardarEditPermisos(); limpiar()">
             <v-card>
                 <v-card-title class="d-flex align-center w-100 font-weight-bold">
                     EDITAR PERMISOS

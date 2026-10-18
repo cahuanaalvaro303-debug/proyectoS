@@ -48,7 +48,7 @@
             <v-spacer />
             <span v-if="usuario"
                 class="mr-5">
-                {{ usuario.nombre }}
+                {{ usuario.nombre }} {{usuario.apellido}}
             </span>
             <v-btn @click="cerrarSesion"
                     color="error"
