@@ -52,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/asignaciones', [AsignacionController::class, 'registro']);
     Route::patch('/asignaciones/{id}', [AsignacionController::class, 'editarInfo']);
     Route::patch('/asignaciones/{id}/desasignar', [AsignacionController::class, 'desasignar']);
+
+    //Ubicaciones
+    //Route::post('/ubicaciones', )
 });
 
 Route::post('/login', [AuthController::class, 'login']);
