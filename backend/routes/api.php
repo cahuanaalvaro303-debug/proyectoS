@@ -8,6 +8,7 @@ use App\Http\Controllers\PermisoController;
 use App\Http\Controllers\TipoVehiculoController;
 use App\Http\Controllers\VehiculoController;
 use App\Http\Controllers\AsignacionController;
+use App\Http\Controllers\UbicacionController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -54,7 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/asignaciones/{id}/desasignar', [AsignacionController::class, 'desasignar']);
 
     //Ubicaciones
-    //Route::post('/ubicaciones', )
+    Route::post('/ubicaciones', [UbicacionController::class, 'registrar'] );
+    Route::get('/ubicaciones', [UbicacionController::class, 'ultimas']);
+    
 });
 
 Route::post('/login', [AuthController::class, 'login']);
