@@ -194,7 +194,7 @@ onMounted(()=>{cargarVehiculos()})
         <v-form
         ref="formularioNuevo"
         @submit.prevent="guardarNuevoVehiculo()">
-            <v-card>
+            <v-card class="d-flex">
                 <v-card-title class="align-center d-flex w-100 font-weight-bold ma-3">
                     NUEVO VEHÍCULO
                     <v-spacer></v-spacer>

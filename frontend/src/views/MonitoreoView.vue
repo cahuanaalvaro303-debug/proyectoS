@@ -134,10 +134,8 @@ onBeforeUnmount(() => {
         <v-row>
             <v-col>
                 <v-card>
-                    <v-card-title>
+                    <v-card-title class="d-flex align-center w-100 font-weight-bold ma-5">
                         MONITOREO
-                        <v-btn
-                        @click="ultimasUbicaciones()">Cargar ubicaciones</v-btn>
                     </v-card-title>
                     <v-divider></v-divider>
                     <v-card-text>
