@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //Ubicaciones
     Route::post('/ubicaciones', [UbicacionController::class, 'registrar'] );
     Route::get('/ubicaciones', [UbicacionController::class, 'ultimas']);
+    Route::get('/ubicaciones/historial', [UbicacionController::class, 'historial']);
     
 });
 

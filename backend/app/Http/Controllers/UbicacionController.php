@@ -191,4 +191,103 @@ class UbicacionController extends Controller
         ]);
     }
 
+    public function historial(Request $request)
+   {
+    $usuario = $request->user();
+
+    if (!$usuario->activo) {
+        return response()->json([
+            'success' => false,
+            'message' => 'El usuario está inactivo.'
+        ], 403);
+    }
+
+    $tienePermiso = $usuario->permisos()
+        ->where('codigo', 'historial_ubicaciones')
+        ->exists();
+
+    if (!$tienePermiso) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No tienes permiso para consultar el historial de ubicaciones.'
+        ], 403);
+    }
+
+    $datos = $request->validate([
+        'vehiculo_id' => 'required|integer|exists:vehiculos,id',
+        'fecha_inicio' => 'required|date',
+        'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
+        'per_page' => 'sometimes|integer|min:1|max:1000',
+        'page' => 'sometimes|integer|min:1',
+    ]);
+
+    $fechaInicio = Carbon::parse(
+        $datos['fecha_inicio']
+    )->utc()->format('Y-m-d H:i:s');
+
+    $fechaFin = Carbon::parse(
+        $datos['fecha_fin']
+    )->utc()->format('Y-m-d H:i:s');
+
+    $porPagina = (int) ($datos['per_page'] ?? 500);
+    $pagina = (int) ($datos['page'] ?? 1);
+
+    $offset = ($pagina - 1) * $porPagina;
+
+    $ubicaciones = DB::select(
+            'SELECT
+                ub.id,
+                ub.vehiculo_id,
+                v.placa,
+                ub.usuario_id,
+                us.nombre,
+                us.apellido,
+                ST_Y(ub.ubicacion::geometry) AS latitud,
+                ST_X(ub.ubicacion::geometry) AS longitud,
+                ub.velocidad,
+                ub.direccion,
+                to_char(
+                    ub.registrado_en,
+                    \'YYYY-MM-DD"T"HH24:MI:SS"Z"\'
+                ) AS registrado_en,
+                to_char(
+                    ub.recibido_en,
+                    \'YYYY-MM-DD"T"HH24:MI:SS"Z"\'
+                ) AS recibido_en
+            FROM ubicaciones ub
+            INNER JOIN vehiculos v
+                ON v.id = ub.vehiculo_id
+            INNER JOIN usuarios us
+                ON us.id = ub.usuario_id
+            WHERE ub.vehiculo_id = ?
+            AND ub.registrado_en >= ?
+            AND ub.registrado_en <= ?
+            ORDER BY ub.registrado_en ASC, ub.id ASC
+            LIMIT ? OFFSET ?',
+            [
+                $datos['vehiculo_id'],
+                $fechaInicio,
+                $fechaFin,
+                $porPagina + 1,
+                $offset,
+            ]
+        );
+
+        $hayMas = count($ubicaciones) > $porPagina;
+
+        if ($hayMas) {
+            array_pop($ubicaciones);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $ubicaciones,
+            'pagination' => [
+                'current_page' => $pagina,
+                'per_page' => $porPagina,
+                'has_more' => $hayMas,
+            ],
+        ]);
+    }
+
 }
