@@ -9,6 +9,7 @@ use App\Http\Controllers\TipoVehiculoController;
 use App\Http\Controllers\VehiculoController;
 use App\Http\Controllers\AsignacionController;
 use App\Http\Controllers\UbicacionController;
+use App\Http\Controllers\AuditController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -59,6 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ubicaciones', [UbicacionController::class, 'ultimas']);
     Route::get('/ubicaciones/historial', [UbicacionController::class, 'historial']);
     
+    //Audits 
+    Route::get('/audits', [AuditController::class, 'index']);
+    Route::get('/audits/{audit}', [AuditController::class, 'show']);
 });
 
 Route::post('/login', [AuthController::class, 'login']);

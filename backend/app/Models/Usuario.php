@@ -7,14 +7,32 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable implements Auditable
 {
     //
+    use \OwenIt\Auditing\Auditable;
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'usuarios';
+
+    protected $auditInclude = [
+        'nombre',
+        'apellido',
+        'email',
+        'activo',
+        'ci',
+        'telefono'
+    ];
+
+    protected $auditExclude = [
+        'password',
+        'remember_token'
+    ];
+
     
+
     protected $fillable = [
         'nombre',
         'apellido',

@@ -65,7 +65,10 @@ class UsuarioController extends Controller
             'permisos' => 'sometimes|array',
             'permisos.*' => 'integer|exists:permisos,id'
         ]);
-        $usuario->permisos()->sync($request->input('permisos', []));
+
+        $usuario->auditSync('permisos', $request->input('permisos', []), true, [
+            'id', 'nombre']);
+        //$usuario->permisos()->sync($request->input('permisos', []));
 
         return response()->json([
             'success' => true,
