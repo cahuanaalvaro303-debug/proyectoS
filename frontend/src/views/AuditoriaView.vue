@@ -84,12 +84,6 @@
                                 <div v-else-if="item.event == 'sync'">Asignacion/Desasignacion Permisos</div>
                                 <div v-else>---</div>
                             </template>
-                            <template #item.auditabe_type="{ item }">
-                                <div v-if="item.auditable_type == 'App\Models\Usuario'">Usuario</div>
-                                <div></div>
-                                <div></div>
-                                <div></div>
-                            </template>
                         </v-data-table>
                     </v-card-text>
                 </v-card>

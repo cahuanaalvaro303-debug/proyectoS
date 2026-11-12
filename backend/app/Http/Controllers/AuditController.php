@@ -8,6 +8,23 @@ use OwenIt\Auditing\Models\Audit;
 
 class AuditController extends Controller
 {
+    private const MODULOS = [
+        'App\Models\Usuario' => 'Usuario',
+        'App\Models\AsignacionVehiculo' => 'Asignación de Vehículos',
+        'App\Models\Permiso' => 'Permisos',
+        'App\Models\Vehiculo' => 'Vehículo',
+        'App\Models\TipoVehiculo' => 'Tipos de Vehículos',
+    ];
+
+    private function nombreModulo(?string $auditableType): ?string
+    {
+        if (!$auditableType) {
+            return $auditableType;
+        }
+
+        return self::MODULOS[$auditableType] ?? class_basename($auditableType);
+    }
+
     public function index(Request $request)
     {
         $filters = $request->validate([
@@ -48,12 +65,19 @@ class AuditController extends Controller
             ->latest()
             ->paginate(20);
 
+        $audits->through(function ($audit) {
+            $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
+
+            return $audit;
+        });
+
         return response()->json($audits);
     }
 
     public function show(Audit $audit)
     {
         $audit->load('user');
+        $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
 
         return response()->json($audit);
     }
