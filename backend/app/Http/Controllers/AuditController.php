@@ -66,6 +66,7 @@ class AuditController extends Controller
             ->paginate(20);
 
         $audits->through(function ($audit) {
+            $audit->registro = $this->descripcionRegistro($audit);
             $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
 
             return $audit;
@@ -80,5 +81,44 @@ class AuditController extends Controller
         $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
 
         return response()->json($audit);
+    }
+
+    private function descripcionRegistro(Audit $audit): string
+    {
+        $datos = $audit->event === 'deleted'
+            ? ($audit->old_values ?? [])
+            : ($audit->new_values ?? []);
+
+        return match ($audit->auditable_type) {
+            'App\Models\Usuario' => trim(sprintf(
+                '%s %s (CI: %s)',
+                $datos['nombre'] ?? 'Sin nombre',
+                $datos['apellido'] ?? '',
+                $datos['ci'] ?? '—'
+            )),
+
+            'App\Models\Vehiculo' => sprintf(
+                '%s — %s %s',
+                $datos['placa'] ?? '—',
+                $datos['marca'] ?? '',
+                $datos['modelo'] ?? ''
+            ),
+
+            'App\Models\TipoVehiculo' => $datos['nombre'] ?? '—',
+
+            'App\Models\Permiso' => sprintf(
+                '%s (%s)',
+                $datos['nombre'] ?? '—',
+                $datos['codigo'] ?? '—'
+            ),
+
+            'App\Models\AsignacionVehiculo' => sprintf(
+                'Usuario ID: %s | Vehículo ID: %s',
+                $datos['usuario_id'] ?? '—',
+                $datos['vehiculo_id'] ?? '—'
+            ),
+
+            default => class_basename($audit->auditable_type) . ' #' . $audit->auditable_id,
+        };
     }
 }
