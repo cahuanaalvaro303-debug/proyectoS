@@ -63,6 +63,21 @@ const cargarTiposActivos = async () => {
     }
 }
 
+const cargarTipos = async () => {
+    cargando.value = true
+    error.value = null
+    try {
+        const respuesta = await api.get('/tipos_vehiculos')
+        tipos.value = respuesta.data
+    } catch (err) {
+        error.value = err.response?.data?.message || 
+            'No se pudo cargar los tipos de vehículos'
+        alert(error.value)
+    } finally {
+        cargando.value = false
+    }
+}
+
 const cargarVehiculos = async () => {
     cargando.value = true
     error.value = null

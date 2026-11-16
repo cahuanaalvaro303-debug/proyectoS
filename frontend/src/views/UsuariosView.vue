@@ -1,6 +1,6 @@
 <script setup>
     import api from '../services/api';
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted, computed } from 'vue';
     import { useRouter } from 'vue-router';
 
 
@@ -12,6 +12,7 @@
     const dialogNuevo = ref(false)
     const dialogEditInfo = ref(false)
     const dialogEditPerm = ref(false)
+    const usuarioSeleccionado = ref(null)
 
     const nombre = ref('')
     const apellido = ref('')
@@ -29,6 +30,22 @@
     const permisosSeleccionados = ref([])
 
     const itemsPermisos = ref([])
+
+
+    const usuariosFiltrados = computed(() => {
+    if (usuarioSeleccionado.value) {
+        return [usuarioSeleccionado.value]
+    }
+
+    return usuarios.value
+    })
+
+    const usuariosOpciones = computed(() => {
+    return usuarios.value.map(usuario => ({
+        ...usuario,
+        label: `${usuario.nombre} ${usuario.apellido} - CI: ${usuario.ci}`
+    }))
+    })
 
     const headers = [
         {title: 'Nombres', key: 'nombre', align: 'center', headerProps: {class: 'font-weight-bold'}},
@@ -224,11 +241,27 @@
                             :loading="cargando"
                             @click="dialogNuevo = true;  cargarPermisos()">REGISTRAR NUEVO USUARIO</v-btn>
                     </v-card-title>
+                        
+                    <v-card-subtitle class="d-flex align-center mr-6 ml-6">
+                        <v-autocomplete
+                        v-model="usuarioSeleccionado"
+                        :items="usuariosOpciones"
+                        item-title="label"
+                        item-value="id"
+                        return-object
+                        label="Buscar por nombre, apellido o CI"
+                        placeholder="Nombre, apellido o CI"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        style="max-width: 400px;"
+                        no-data-text="No se encontraron usuarios">
+                        </v-autocomplete>
+                    </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text class="mt-2">
                         <v-data-table
                         :headers="headers"
-                        :items="usuarios">
+                        :items="usuariosFiltrados">
                             <template #item.activo="{ item }">
                                 <span v-if="item.activo">
                                     Activo

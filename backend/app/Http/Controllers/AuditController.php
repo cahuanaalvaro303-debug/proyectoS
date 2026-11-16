@@ -63,13 +63,12 @@ class AuditController extends Controller
                 )
             )
             ->latest()
-            ->paginate(20);
+            ->get();
 
-        $audits->through(function ($audit) {
+        $audits->each(function ($audit) {
+            $this->sanearPassword($audit);
             $audit->registro = $this->descripcionRegistro($audit);
             $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
-
-            return $audit;
         });
 
         return response()->json($audits);
@@ -78,9 +77,24 @@ class AuditController extends Controller
     public function show(Audit $audit)
     {
         $audit->load('user');
+        $this->sanearPassword($audit);
         $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
 
         return response()->json($audit);
+    }
+
+    private function sanearPassword($audit): void
+    {
+        $old = $audit->old_values ?? [];
+        $new = $audit->new_values ?? [];
+
+        if (is_array($old) && array_key_exists('password', $old)) {
+            $audit->old_values = ['password' => '********'];
+        }
+
+        if (is_array($new) && array_key_exists('password', $new)) {
+            $audit->new_values = ['password' => '********'];
+        }
     }
 
     private function descripcionRegistro(Audit $audit): string

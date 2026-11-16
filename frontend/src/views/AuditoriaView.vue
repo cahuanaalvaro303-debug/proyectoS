@@ -19,13 +19,14 @@
     ]
 
     const cargarRegistros = async ()=> {
+        
         cargando.value = true
         error.value = ''
 
         try {
             const respuesta = await api.get('/audits')
-            registros.value = respuesta.data.data
-            console.log('Registros de auditoria',respuesta.data.data)
+            registros.value = respuesta.data
+            console.log('Registros de auditoria',respuesta.data)
         } catch (err) {
             error.value = err.response?.data?.message || 
                 'Error al cargar registros'
@@ -94,7 +95,7 @@
                         :items="registros">
                     
                             <template #item.user.nombre="{ item }">
-                                {{ item.user.nombre }} {{ item.user.apellido }}
+                                {{ item.user?.nombre ?? 'Sistema' }} {{ item.user?.apellido ?? '' }}
                             </template>
                             <template #item.created_at="{ item }">
                                 {{ formatearFecha(item.created_at) }}
