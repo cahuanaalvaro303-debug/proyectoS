@@ -35,6 +35,28 @@
         }
     }
 
+    const formatearValores = (valores) => {
+        if (!valores || typeof valores !== 'object') 
+            return '---'
+        const campos = Object.entries(valores)
+        if (!campos.length) 
+            return '---'
+
+        return campos.map(([campo, valor]) => {
+            if (Array.isArray(valor)) {
+                const detalle = valor.map(item =>
+                    item && typeof item === 'object'
+                        ? (item.nombre ?? item.placa ?? JSON.stringify(item))
+                        : item
+                ).join(', ')
+                return `${campo}: ${detalle}`
+            }
+            if (valor !== null && typeof valor === 'object')
+                return `${campo}: ${JSON.stringify(valor)}`
+            return `${campo}: ${valor ?? '—'}`
+        }).join(' | ')
+    }
+
     const formatearFecha = (fechaRaw) =>{
     if(!fechaRaw) 
         return '---'
@@ -83,6 +105,12 @@
                                 <div v-else-if="item.event == 'delete'">Eliminado</div>
                                 <div v-else-if="item.event == 'sync'">Asignacion/Desasignacion Permisos</div>
                                 <div v-else>---</div>
+                            </template>
+                            <template #item.old_values="{ item }">
+                                {{ formatearValores(item.old_values) }}
+                            </template>
+                            <template #item.new_values="{ item }">
+                                {{ formatearValores(item.new_values) }}
                             </template>
                         </v-data-table>
                     </v-card-text>

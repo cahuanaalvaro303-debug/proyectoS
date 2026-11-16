@@ -85,40 +85,88 @@ class AuditController extends Controller
 
     private function descripcionRegistro(Audit $audit): string
     {
+        if ($audit->event === 'sync') {
+            return $this->descripcionSync($audit);
+        }
+
         $datos = $audit->event === 'deleted'
             ? ($audit->old_values ?? [])
             : ($audit->new_values ?? []);
 
+        $modelo = $audit->event === 'deleted'
+            ? null
+            : $audit->auditable()->first();
+
         return match ($audit->auditable_type) {
             'App\Models\Usuario' => trim(sprintf(
                 '%s %s (CI: %s)',
-                $datos['nombre'] ?? 'Sin nombre',
-                $datos['apellido'] ?? '',
-                $datos['ci'] ?? '—'
+                $datos['nombre'] ?? $modelo?->nombre ?? 'Sin nombre',
+                $datos['apellido'] ?? $modelo?->apellido ?? '',
+                $datos['ci'] ?? $modelo?->ci ?? '—'
             )),
 
             'App\Models\Vehiculo' => sprintf(
                 '%s — %s %s',
-                $datos['placa'] ?? '—',
-                $datos['marca'] ?? '',
-                $datos['modelo'] ?? ''
+                $datos['placa'] ?? $modelo?->placa ?? '—',
+                $datos['marca'] ?? $modelo?->marca ?? '',
+                $datos['modelo'] ?? $modelo?->modelo ?? ''
             ),
 
-            'App\Models\TipoVehiculo' => $datos['nombre'] ?? '—',
+            'App\Models\TipoVehiculo' => $datos['nombre'] ?? $modelo?->nombre ?? '—',
 
             'App\Models\Permiso' => sprintf(
                 '%s (%s)',
-                $datos['nombre'] ?? '—',
-                $datos['codigo'] ?? '—'
+                $datos['nombre'] ?? $modelo?->nombre ?? '—',
+                $datos['codigo'] ?? $modelo?->codigo ?? '—'
             ),
 
-            'App\Models\AsignacionVehiculo' => sprintf(
-                'Usuario ID: %s | Vehículo ID: %s',
-                $datos['usuario_id'] ?? '—',
-                $datos['vehiculo_id'] ?? '—'
-            ),
+            'App\Models\AsignacionVehiculo' => $this->descripcionAsignacion($datos, $modelo),
 
             default => class_basename($audit->auditable_type) . ' #' . $audit->auditable_id,
         };
+    }
+
+    private function descripcionAsignacion(array $datos, $modelo): string
+    {
+        $usuarioId = $datos['usuario_id'] ?? $modelo?->usuario_id;
+        $vehiculoId = $datos['vehiculo_id'] ?? $modelo?->vehiculo_id;
+
+        $usuario = $usuarioId ? \App\Models\Usuario::find($usuarioId) : null;
+        $vehiculo = $vehiculoId ? \App\Models\Vehiculo::find($vehiculoId) : null;
+
+        return sprintf(
+            '%s — %s',
+            $usuario
+                ? trim($usuario->nombre . ' ' . $usuario->apellido)
+                : 'Usuario #' . $usuarioId,
+            $vehiculo->placa ?? 'Vehículo #' . $vehiculoId
+        );
+    }
+
+    private function descripcionSync(Audit $audit): string
+    {
+        $nuevos = $audit->new_values ?? [];
+        $antiguos = $audit->old_values ?? [];
+
+        $agregados = collect($nuevos['permisos'] ?? [])
+            ->pluck('nombre')->filter()->implode(', ');
+        $quitados = collect($antiguos['permisos'] ?? [])
+            ->pluck('nombre')->filter()->implode(', ');
+
+        if ($audit->auditable_type === 'App\Models\Usuario') {
+            $usuario = $audit->auditable()->first();
+            $persona = $usuario
+                ? trim($usuario->nombre . ' ' . $usuario->apellido)
+                : 'Usuario #' . $audit->auditable_id;
+
+            $detalle = collect([
+                $agregados ? "+{$agregados}" : null,
+                $quitados ? "-{$quitados}" : null,
+            ])->filter()->implode(' / ');
+
+            return $detalle ? "{$persona} — Permisos: {$detalle}" : $persona;
+        }
+
+        return 'Sincronización #' . $audit->auditable_id;
     }
 }
