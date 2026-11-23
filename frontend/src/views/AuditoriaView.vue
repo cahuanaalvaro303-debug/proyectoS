@@ -1,10 +1,15 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted } from 'vue';
     import api from '../services/api';
 
     const cargando = ref(false)
     const error = ref('')
     const registros = ref([])
+    const usuarios = ref([])
+    const usuarioSeleccionado = ref('')
+    const registroBuscado = ref('')
+    const fechaDesde = ref('')
+    const fechaHasta = ref('')
 
 
     const headers = [
@@ -18,13 +23,21 @@
         {title: 'Dirección IP', key: 'ip_address', align: 'center', headerProps: {class: 'font-weight-bold'}}
     ]
 
-    const cargarRegistros = async ()=> {
+    const usuariosOpciones = computed(() => [
+        { id: '', nombre: 'Todos' },
+        ...usuarios.value.map(usuario => ({
+            id: usuario.id,
+            nombre: `${usuario.nombre} ${usuario.apellido}`
+        }))
+    ])
+
+    const cargarRegistros = async (params = {}) => {
         
         cargando.value = true
         error.value = ''
 
         try {
-            const respuesta = await api.get('/audits')
+            const respuesta = await api.get('/audits', { params })
             registros.value = respuesta.data
             console.log('Registros de auditoria',respuesta.data)
         } catch (err) {
@@ -34,6 +47,53 @@
         } finally {
             cargando.value = false
         }
+    }
+
+    const cargarUsuarios = async () => {
+        cargando.value = true
+        error.value = ''
+
+        try {
+            const respuesta = await api.get('/usuarios')
+            usuarios.value = respuesta.data.data
+            console.log('Lista de usuarios', respuesta.data)
+        } catch (err) {
+            error.value = err.response?.data?.message ||
+                'Error al cargar usuarios'
+            alert(error.value)
+        } finally {
+            cargando.value = false
+        }
+    }
+
+    const buscar = async () => {
+        if (fechaDesde.value && fechaHasta.value && fechaDesde.value > fechaHasta.value) {
+            error.value = 'La fecha desde no puede ser posterior a la fecha hasta'
+            alert(error.value)
+            return
+        }
+
+        const params = {}
+
+        if (usuarioSeleccionado.value)
+            params.user_id = usuarioSeleccionado.value
+        if (registroBuscado.value.trim())
+            params.registro = registroBuscado.value.trim()
+        if (fechaDesde.value)
+            params.from = fechaDesde.value
+        if (fechaHasta.value)
+            params.to = fechaHasta.value
+
+        await cargarRegistros(params)
+    }
+
+    const limpiarFiltros = () => {
+        usuarioSeleccionado.value = ''
+        registroBuscado.value = ''
+        fechaDesde.value = ''
+        fechaHasta.value = ''
+        error.value = ''
+        cargarRegistros()
     }
 
     const formatearValores = (valores) => {
@@ -72,7 +132,10 @@
     }).format(fecha)
     }
 
-    onMounted(()=>{cargarRegistros()})
+    onMounted(()=>{
+        cargarUsuarios()
+        cargarRegistros()
+    })
 
 </script>
 
@@ -85,8 +148,61 @@
                     <v-card-title class="d-flex align-center w-100 font-weight-bold ma-5">
                         AUDITORIA
                     </v-card-title>
-                    <v-card-subtitle>
-                        
+                    <v-card-subtitle class="d-flex align-center flex-wrap ga-4 mr-6 ml-6">
+                        <v-autocomplete
+                        label="Usuario"
+                        :items="usuariosOpciones"
+                        item-title="nombre"
+                        item-value="id"
+                        v-model="usuarioSeleccionado"
+                        placeholder="Buscar usuario"
+                        prepend-inner-icon="mdi-account-search"
+                        clearable
+                        no-data-text="No se encontraron usuarios"
+                        style="max-width: 260px;"
+                        @click:clear="usuarioSeleccionado = ''">
+                        </v-autocomplete>
+
+                        <v-text-field
+                        label="Registro afectado"
+                        v-model="registroBuscado"
+                        placeholder="Placa, nombre, CI o ID"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        style="max-width: 260px;">
+                        </v-text-field>
+
+                        <v-text-field
+                        label="Fecha desde"
+                        v-model="fechaDesde"
+                        type="date"
+                        :max="fechaHasta"
+                        clearable
+                        style="max-width: 180px;">
+                        </v-text-field>
+
+                        <v-text-field
+                        label="Fecha hasta"
+                        v-model="fechaHasta"
+                        type="date"
+                        :min="fechaDesde"
+                        clearable
+                        style="max-width: 180px;">
+                        </v-text-field>
+
+                        <v-btn
+                        prepend-icon="mdi-magnify"
+                        variant="outlined"
+                        @click="buscar()">
+                            Buscar
+                        </v-btn>
+
+                        <v-btn
+                        prepend-icon="mdi-eraser"
+                        variant="text"
+                        @click="limpiarFiltros()">
+                            Limpiar
+                        </v-btn>
                     </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text>

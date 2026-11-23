@@ -1,6 +1,6 @@
 <script setup>
 import api from '../services/api';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 const tiposVehiculos = ref([])
@@ -12,6 +12,8 @@ const nombre = ref('')
 const descripcion = ref('')
 const activo = ref(true)
 const idTipo = ref('')
+const tipoSeleccionado = ref(null)
+
 
 const formularioNuevo = ref(null)
 const formularioEdit = ref(null)
@@ -33,6 +35,21 @@ function limpiar() {
     descripcion.value = ''
     idTipo.value = ''
 }
+
+const tipoOpciones = computed(() => {
+    return tiposVehiculos.value.map(tipo => ({
+        ...tipo, 
+        label: `${tipo.nombre}`
+    }))
+})
+
+const tiposFiltrados = computed(() => {
+    if (tipoSeleccionado.value){
+        return [tipoSeleccionado.value]
+    }
+
+    return tiposVehiculos.value
+})
 
 const cargarTiposVehiculos = async () => {
     cargando.value = true
@@ -134,11 +151,27 @@ onMounted(() => {cargarTiposVehiculos()})
                         color="success mr-5"
                         @click="dialogNuevo = true">CREAR NUEVO TIPO DE VEHÍCULO</v-btn>
                     </v-card-title>
+
+                    <v-card-subtitle class="d-flex align-center mr-6 ml-6">
+                        <v-autocomplete
+                        v-model="tipoSeleccionado"
+                        :items="tipoOpciones"
+                        item-title="label"
+                        item-value="id"
+                        return-object
+                        label="Buscar por nombre"
+                        placeholder="Nombre, apellido o CI"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        style="max-width: 400px;"
+                        no-data-text="No se encontraron tipos de vehículos">
+                        </v-autocomplete>
+                    </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text>
                         <v-data-table
                         :headers="headers"
-                        :items="tiposVehiculos">
+                        :items="tiposFiltrados">
                             <template #item.activo="{ item }">
                                 <span v-if="item.activo">Activo</span>
                                 <span v-else>Inactivo</span>

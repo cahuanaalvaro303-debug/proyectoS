@@ -1,6 +1,6 @@
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
 import L from 'leaflet'
 import api from '../services/api'
 
@@ -14,6 +14,28 @@ let capaMarcadores = null
 const marcadores = new Map()
 
 const ubicaciones = ref([])
+const filtro = ref(null)
+
+const opcionesUbicacion = computed(() => ubicaciones.value.map(u => ({
+  ...u,
+  label: `${u.placa} — ${u.usuario_nombre ?? ''} ${u.usuario_apellido ?? ''}`.trim()
+})))
+
+const ubicacionesFiltradas = computed(() => {
+  if (!filtro.value)
+    return ubicaciones.value
+
+  return ubicaciones.value.filter(u => u.vehiculo_id === filtro.value.vehiculo_id)
+})
+
+watch(ubicacionesFiltradas, lista => {
+  sincronizarUbicaciones(lista)
+  ajustarMapaVehiculos()
+})
+
+const limpiarFiltro = () => {
+  filtro.value = null
+}
 
 const ultimasUbicaciones = async () => {
   cargando.value = true
@@ -137,6 +159,28 @@ onBeforeUnmount(() => {
                     <v-card-title class="d-flex align-center w-100 font-weight-bold ma-5">
                         MONITOREO
                     </v-card-title>
+                    <v-card-subtitle class="d-flex align-center flex-wrap ga-4 mr-6 ml-6">
+                        <v-autocomplete
+                        label="Buscar usuario o vehículo"
+                        :items="opcionesUbicacion"
+                        item-title="label"
+                        item-value="vehiculo_id"
+                        v-model="filtro"
+                        return-object
+                        placeholder="Nombre, apellido o placa"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        no-data-text="No se encontraron resultados"
+                        style="max-width: 360px;">
+                        </v-autocomplete>
+
+                        <v-btn
+                        prepend-icon="mdi-eraser"
+                        variant="text"
+                        @click="limpiarFiltro()">
+                            Limpiar filtro
+                        </v-btn>
+                    </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text>
                         <div ref="contenedorMapa" class="mapa"></div>

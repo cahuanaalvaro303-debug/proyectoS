@@ -33,6 +33,7 @@ class AuditController extends Controller
                 Rule::in(['created', 'updated', 'deleted', 'restored']),
             ],
             'user_id' => ['nullable', 'integer'],
+            'registro' => ['nullable', 'string', 'max:100'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
         ]);
@@ -71,6 +72,16 @@ class AuditController extends Controller
             $audit->auditable_type = $this->nombreModulo($audit->auditable_type);
         });
 
+        $busqueda = trim((string) ($filters['registro'] ?? ''));
+
+        if ($busqueda !== '') {
+            $audits = $audits->filter(function ($audit) use ($busqueda) {
+                $texto = $audit->registro . ' ' . $audit->auditable_id;
+
+                return stripos($texto, $busqueda) !== false;
+            })->values();
+        }
+
         return response()->json($audits);
     }
 
@@ -85,15 +96,13 @@ class AuditController extends Controller
 
     private function sanearPassword($audit): void
     {
-        $old = $audit->old_values ?? [];
-        $new = $audit->new_values ?? [];
+        foreach (['old_values', 'new_values'] as $campo) {
+            $valores = $audit->{$campo};
 
-        if (is_array($old) && array_key_exists('password', $old)) {
-            $audit->old_values = ['password' => '********'];
-        }
-
-        if (is_array($new) && array_key_exists('password', $new)) {
-            $audit->new_values = ['password' => '********'];
+            if (is_array($valores) && array_key_exists('password', $valores)) {
+                $valores['password'] = '********';
+                $audit->{$campo} = $valores;
+            }
         }
     }
 

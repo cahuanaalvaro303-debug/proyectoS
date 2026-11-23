@@ -1,6 +1,6 @@
 <script setup>
 import api from '../services/api';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import {  useRouter } from 'vue-router';
 
 const error = ref('')
@@ -17,10 +17,13 @@ const color = ref('')
 const activo = ref(true)
 const tipoSeleccionado = ref('')
 const idVehiculo = ref('')
+const vehiculoSeleccionado = ref(null)
 
 const formularioNuevo = ref(null)
 const formularioEdit = ref(null)
 const requerido = value => !!value || 'Este campo es requerido' 
+
+
 
 const router = useRouter()
 
@@ -34,6 +37,20 @@ const headers = [
     {title: 'Activo', key: 'activo', align: 'center', headerProps: {class: 'font-weight-bold'}},
     {title: 'Acciones', key: 'acciones', align: 'center', headerProps: {class: 'font-weight-bold'}}
 ]
+
+const vehiculoOpciones = computed(() => {
+    return vehiculos.value.map(vehiculo => ({
+        ...vehiculo,
+        label: `${vehiculo.tipo_vehiculo.nombre} - ${vehiculo.placa}`
+    }))
+})
+
+const vehiculosFiltrados = computed(() => {
+    if(vehiculoSeleccionado.value) {
+        return [vehiculoSeleccionado.value]
+    }
+    return vehiculos.value
+})
 
 function limpiar() {
     dialogNuevo.value = false
@@ -180,11 +197,26 @@ onMounted(()=>{cargarVehiculos()})
                         color="success mr-5"
                         @click="dialogNuevo = true; cargarTiposActivos()">NUEVO VEHÍCULO</v-btn>
                     </v-card-title>
+                    <v-card-subtitle class="d-flex align-center mr-6 ml-6">
+                        <v-autocomplete
+                        v-model="vehiculoSeleccionado"
+                        :items="vehiculoOpciones"
+                        item-title="label"
+                        item-value="id"
+                        return-object
+                        label="Buscar por tipo, placa"
+                        placeholder="Nombre, apellido o CI"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        style="max-width: 400px;"
+                        no-data-text="No se encontraron tipos de vehículos">
+                        </v-autocomplete>
+                    </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text>
                         <v-data-table
                         :headers="headers"
-                        :items="vehiculos">
+                        :items="vehiculosFiltrados">
                     <template #item.acciones="{ item }">
                         <v-btn
                         prepend-icon="mdi-pencil"

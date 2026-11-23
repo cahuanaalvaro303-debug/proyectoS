@@ -204,9 +204,9 @@ onBeforeUnmount(() => {
                         <v-autocomplete
                           label="Vehículo"
                           :items="vehiculos"
-                          :item-title="item => `${item.tipo_vehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
+                          :item-title="item => `${item.tipoVehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
                           item-value="id"
-                          :filter-keys="['raw.placa', 'raw.tipo_vehiculo.nombre']"
+                          :filter-keys="['raw.placa', 'raw.tipoVehiculo.nombre']"
                           clearable
                           v-model="vehiculoSeleccionado"
                           :rules="[requerido]"

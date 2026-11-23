@@ -54,7 +54,7 @@ class UsuarioController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Cambios realizado correctamente'
+            'message' => 'Cambios realizados correctamente'
         ], 200);
     }
 
@@ -66,7 +66,14 @@ class UsuarioController extends Controller
             'permisos.*' => 'integer|exists:permisos,id'
         ]);
 
-        $usuario->auditSync('permisos', $request->input('permisos', []), true, [
+        $ids = $request->input('permisos');
+        $permitidos = $request->user()
+                ->permisos()
+                ->whereIn('id', $ids)
+                ->pluck('id')
+                ->all();
+
+        $usuario->auditSync('permisos', $permitidos, true, [
             'id', 'nombre']);
         //$usuario->permisos()->sync($request->input('permisos', []));
 

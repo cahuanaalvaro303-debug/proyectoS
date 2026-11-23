@@ -36,7 +36,7 @@ class TipoVehiculoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Tipo de vehículo creado correctamente'
-        ]);
+        ], 201);
     }
 
     public function editarInfo($id, Request $request) {

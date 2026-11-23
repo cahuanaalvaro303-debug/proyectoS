@@ -181,7 +181,8 @@ class UbicacionController extends Controller
                 ORDER BY ub.recibido_en DESC, ub.id DESC
                 LIMIT 1
             ) u ON TRUE
-            WHERE u.latitud IS NOT NULL 
+            WHERE v.activo = true
+              AND u.latitud IS NOT NULL
             ORDER BY v.id
         ");
 

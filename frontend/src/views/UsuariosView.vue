@@ -191,9 +191,7 @@
         cargando.value = true
         error.value = null
         try {
-            await api.patch(`/usuarios/${usuarioId.value}/password`, {
-                password: '12345678'
-            })
+            await api.patch(`/usuarios/${usuarioId.value}/password`)
             alert('Contraseña restablecida correctamente')
             limpiar()
             await cargarUsuarios()

@@ -22,12 +22,13 @@
     const cerrarSesion = async () => {
         try {
             await api.post('/logout')
-            localStorage.removeItem('token')
-            limpiarUsuario()
-            router.replace('/')
         } catch (error) {
             console.error(error.response?.data || error)
             alert('Error al cerrar sesión')
+        } finally {
+            localStorage.removeItem('token')
+            limpiarUsuario()
+            router.replace('/')
         }
     }
 

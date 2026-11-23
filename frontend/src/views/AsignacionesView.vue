@@ -1,6 +1,6 @@
 <script setup>
 import api from '../services/api';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 
 const cargando = ref(false)
 const error = ref('')
@@ -35,6 +35,22 @@ const headers = [
     {title: 'Activo', key: 'activo', align: 'activo', headerProps: {class: 'font-weight-bold'}},
     {title: 'Acciones', key: 'acciones', align: 'center', headerProps: {class: 'font-weight-bold'}}
 ]
+
+const asignacionesOpciones = computed(() => {
+    return asignaciones.value.map(asignacion => ({
+        ...asignacion,
+        label: `${asignacion.usuario.nombre} ${asignacion.usuario.apellido} - Placa ${asignacion.vehiculo.placa}`
+    }))
+})
+
+const asignacionesfiltrados = computed(() => {
+    if(asignacionSeleccionada.value) {
+        return [asignacionSeleccionada.value]
+    }
+
+    return asignaciones.value
+})
+
 
 const cargarAsignaciones = async () => {
     cargando.value = true
@@ -225,11 +241,26 @@ onMounted(()=>{cargarAsignaciones();})
                         color="success mr-5"
                         @click="dialogNuevo = true; cargarUsuariosActivos(); cargarVehiculosActivos()">NUEVA ASIGNACIÓN</v-btn>
                     </v-card-title>
+                    <v-card-subtitle class="d-flex align-center mr-6 ml-6">
+                        <v-autocomplete
+                        v-model="asignacionSeleccionada"
+                        :items="asignacionesOpciones"
+                        item-title="label"
+                        item-value="id"
+                        return-object
+                        label="Buscar por nombre de usuario o placa"
+                        placeholder="Nombre, apellido o placa"
+                        prepend-inner-icon="mdi-magnify"
+                        clearable
+                        style="max-width: 400px;"
+                        no-data-text="No se encontraron asignaciones">
+                        </v-autocomplete>
+                    </v-card-subtitle>
                     <v-divider></v-divider>
                     <v-card-text>
                         <v-data-table
                         :headers="headers"
-                        :items="asignaciones">
+                        :items="asignacionesfiltrados">
                     <template #item.acciones="{ item }">
                         <v-btn
                         prepend-icon="mdi-pencil"
@@ -252,7 +283,7 @@ onMounted(()=>{cargarAsignaciones();})
                         {{ item.usuario.nombre }} {{ item.usuario.apellido }}
                     </template>
 
-                    <template #item.vehiculo.tipo_vehiculo.nombre="{ item }">
+                    <template #item.vehiculo.tipo_vehiculo?.nombre="{ item }">
                         {{ item.vehiculo.tipo_vehiculo.nombre }} - {{ item.vehiculo.placa }}
                     </template>
 

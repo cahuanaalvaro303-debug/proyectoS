@@ -20,6 +20,7 @@ const routes = [
     {
         path: '/menu',
         component: Layout,
+        meta: { requiresAuth: true },
         children: [
             {
                 path: '',

@@ -5,11 +5,12 @@ use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
-
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
+    private const PASSWORD_POR_DEFECTO = '12345678';
+
     //
     public function login(Request $request) {
 
@@ -39,6 +40,15 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ( !$usuario->activo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuario Inactivo'
+            ], 403);
+        }
+
+        RateLimiter::clear($key);
+
         $token = $usuario->createToken('token')->plainTextToken;
 
         return response()->json([
@@ -54,7 +64,7 @@ class AuthController extends Controller
     }
 
     public function logout(Request $request) {
-        $request->user()->currentAccessToken()->delete();
+        $request->user()->currentAccessToken()?->delete();
 
 
         return response()->json([
@@ -71,7 +81,6 @@ class AuthController extends Controller
             'ci' => 'required|string|max:20|unique:usuarios,ci',
             'telefono' => 'required|string|max:30',
             'email' => 'required|email|unique:usuarios,email',
-            'password' => 'required|string|min:8', 
             'activo' => 'required|boolean', 
             'permisos' => 'sometimes|array',
             'permisos.*' => 'integer|exists:permisos,id'
@@ -83,11 +92,18 @@ class AuthController extends Controller
             'ci' => $request->ci,
             'telefono' => $request->telefono,
             'email' => $request->email,
-            'password' => $request->password,
+            'password' => self::PASSWORD_POR_DEFECTO,
             'activo' => $request->activo
         ]);
 
-        $usuario->permisos()->sync($request->input('permisos', []));
+        $ids = collect($request->input('permisos', []));
+
+        $permitidos = $request->user()
+                ->permisos()
+                ->whereIn('id', $ids)
+                ->pluck('id');
+
+        $usuario->permisos()->sync($permitidos);
 
         return response()->json([
             'success' => true,
@@ -95,19 +111,19 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function editPassword($id, Request $request) {
-        
+    public function editPassword($id)
+    {
         $usuario = Usuario::findOrFail($id);
-        $request->validate([
-            'password' => 'required|string|min:8'
-        ]);
 
         $usuario->update([
-            'password' => $request->password 
+            'password' => self::PASSWORD_POR_DEFECTO
         ]);
-        
+
+        $usuario->tokens()->delete();
+
         return response()->json([
-            'message' => 'Constraseña restablecida'
+            'success' => true,
+            'message' => 'Contraseña restablecida correctamente.'
         ]);
     }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\AsignacionVehiculo;
+use Illuminate\Validation\Rule;
 
 class AsignacionController extends Controller
 {
@@ -18,41 +19,64 @@ class AsignacionController extends Controller
     }
 
     public function registro(Request $request) {
-        $request->validate([
-            'usuario_id' => 'required|exists:usuarios,id',
-             'vehiculo_id' => 'required|exists:vehiculos,id',
-             'fecha_inicio' => 'required|date',
-             'observaciones_entrega' => 'nullable|string'
+        $datos = $request->validate([
+            'usuario_id' => [
+                'required',
+                'integer',
+                Rule::exists('usuarios', 'id')->where('activo', true),
+            ],
+            'vehiculo_id' => [
+                'required',
+                'integer',
+                Rule::exists('vehiculos', 'id')->where('activo', true),
+            ],
+            'fecha_inicio' => 'required|date|before_or_equal:now',
+            'observaciones_entrega' => 'nullable|string'
         ]);
 
-    AsignacionVehiculo::create([
-        'usuario_id' => $request->usuario_id,
-        'vehiculo_id' => $request->vehiculo_id,
-        'fecha_inicio' => $request->fecha_inicio,
-        'fecha_fin' => null,
-        'observaciones_entrega' => $request->observaciones_entrega,
-        'observaciones_devolucion' => null,
-        'activo' => true
-    ]);
+        $activa = fn ($campo, $id) => AsignacionVehiculo::where($campo, $id)
+            ->where('activo', true)
+            ->whereNull('fecha_fin')
+            ->exists();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Asignacion creada correctamente'
-    ]);
+        if ($activa('usuario_id', $datos['usuario_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El usuario ya tiene una asignación activa.'
+            ], 409);
+        }
+
+        if ($activa('vehiculo_id', $datos['vehiculo_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El vehículo ya está asignado.'
+            ], 409);
+        }
+
+        AsignacionVehiculo::create([
+            'usuario_id' => $datos['usuario_id'],
+            'vehiculo_id' => $datos['vehiculo_id'],
+            'fecha_inicio' => $datos['fecha_inicio'],
+            'fecha_fin' => null,
+            'observaciones_entrega' => $datos['observaciones_entrega'] ?? null,
+            'observaciones_devolucion' => null,
+            'activo' => true
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Asignacion creada correctamente'
+        ], 201);
     }
 
     public function editarInfo ($id, Request $request) {
         $asignacion = AsignacionVehiculo::findOrFail($id);
 
         $request->validate([
-            'usuario_id' => 'required|exists:usuarios,id',
-            'vehiculo_id' => 'required|exists:vehiculos,id',
             'observaciones_entrega' => 'required|string',
         ]);
 
         $asignacion->update([
-            'usuario_id' => $request->usuario_id,
-            'vehiculo_id' => $request->vehiculo_id,
             'observaciones_entrega' => $request->observaciones_entrega
         ]);
 

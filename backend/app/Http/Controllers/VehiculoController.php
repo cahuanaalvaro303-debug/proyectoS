@@ -28,7 +28,7 @@ class VehiculoController extends Controller
             'placa' => 'required|string|max:20|unique:vehiculos,placa',
             'marca' => 'required|string|max:100',
             'modelo' => 'required|string|max:100',
-            'anio' => 'required|integer',
+            'anio' => 'required|integer|digits:4|min:1900',
             'color' => 'required|string|max:50',
             'tipo_vehiculo_id' => 'required|integer|exists:tipos_vehiculo,id',
             'activo' => 'required|boolean'
@@ -47,7 +47,7 @@ class VehiculoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Vehículo guardado correctamente'
-        ]);
+        ], 201);
     }
 
     public function editInfo($id, Request $request) {
@@ -61,8 +61,8 @@ class VehiculoController extends Controller
                 Rule::unique('vehiculos', 'placa')->ignore($vehiculo->id)],
             'marca' => 'required|string|max:100',
             'modelo' => 'required|string|max:100',
-            'anio' => 'required|integer',
-            'color' => 'required|string|max:100',
+            'anio' => 'required|integer|digits:4|min:1900',
+            'color' => 'required|string|max:50',
             'tipo_vehiculo_id' => 'required|integer|exists:tipos_vehiculo,id',
             'activo' => 'required|boolean'
 
