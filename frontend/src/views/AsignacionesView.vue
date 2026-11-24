@@ -22,6 +22,7 @@ const formularioDesasig = ref(null)
 const asignaciones = ref([])
 const idAsignacion = ref('')
 const asignacionSeleccionada = ref(null)
+const asigSeleccionada = ref(null)
 
 const requerido = value => !!value || 'Este campo es requerido' 
 
@@ -44,8 +45,8 @@ const asignacionesOpciones = computed(() => {
 })
 
 const asignacionesfiltrados = computed(() => {
-    if(asignacionSeleccionada.value) {
-        return [asignacionSeleccionada.value]
+    if(asigSeleccionada.value) {
+        return [asigSeleccionada.value]
     }
 
     return asignaciones.value
@@ -243,7 +244,7 @@ onMounted(()=>{cargarAsignaciones();})
                     </v-card-title>
                     <v-card-subtitle class="d-flex align-center mr-6 ml-6">
                         <v-autocomplete
-                        v-model="asignacionSeleccionada"
+                        v-model="asigSeleccionada"
                         :items="asignacionesOpciones"
                         item-title="label"
                         item-value="id"
@@ -283,7 +284,7 @@ onMounted(()=>{cargarAsignaciones();})
                         {{ item.usuario.nombre }} {{ item.usuario.apellido }}
                     </template>
 
-                    <template #item.vehiculo.tipo_vehiculo?.nombre="{ item }">
+                    <template #item.vehiculo.tipo_vehiculo.nombre="{ item }">
                         {{ item.vehiculo.tipo_vehiculo.nombre }} - {{ item.vehiculo.placa }}
                     </template>
 
