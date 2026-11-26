@@ -23,9 +23,46 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('/usuario', function (Request $request) {
+    /*Route::get('/usuario', function (Request $request) {
         return $request->user()->load('permisos');
+    });*/
+
+    Route::get('/usuario', function (Request $request) {
+
+    $usuario = $request->user()->load('permisos');
+
+    $asignacionActiva = $usuario->asignaciones()
+        ->where('activo', true)
+        ->with('vehiculo')
+        ->first();
+
+    $usuario->setAttribute('asignacion_activa', $asignacionActiva);
+
+    return $usuario;
     });
+
+    Route::get('/usuario/movil', function (Request $request) {
+    $usuario = $request->user()->load('permisos');
+
+    $asignaciones = $usuario->asignaciones()
+        ->where('activo', true)
+        ->whereNull('fecha_fin')
+        ->where('fecha_inicio', '<=', now())
+        ->whereHas('vehiculo', function ($query) {
+            $query->where('activo', true);
+        })
+        ->with('vehiculo')
+        ->get();
+
+    $asignacionActiva = $asignaciones->count() === 1
+        ? $asignaciones->first()
+        : null;
+
+    $usuario->setAttribute('asignacion_activa', $asignacionActiva);
+
+    return $usuario;
+});
+
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -89,4 +126,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/audits', [AuditController::class, 'index']);
         Route::get('/audits/{audit}', [AuditController::class, 'show']);
     });
+});
+
+
+//Ruta de prueba
+Route::get('/prueba', function () {
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Conexión correcta con Laravel'
+    ]);
+
 });
