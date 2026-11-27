@@ -33,6 +33,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     $asignacionActiva = $usuario->asignaciones()
         ->where('activo', true)
+        ->whereNull('fecha_fin')
+        ->where('fecha_inicio', '<=', now())
+        ->whereHas('vehiculo', function ($query) {
+            $query->where('activo', true);
+        })
+        ->orderByDesc('id')
         ->with('vehiculo')
         ->first();
 

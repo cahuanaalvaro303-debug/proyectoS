@@ -52,6 +52,22 @@ const asignacionesfiltrados = computed(() => {
     return asignaciones.value
 })
 
+const asignacionesActivas = computed(() =>
+    asignaciones.value.filter(asignacion => asignacion.activo && !asignacion.fecha_fin)
+)
+
+const usuariosDisponibles = computed(() => {
+    const ocupados = new Set(asignacionesActivas.value.map(a => a.usuario?.id))
+    const actual = asignacionSeleccionada.value?.usuario?.id
+    return usuarios.value.filter(u => !ocupados.has(u.id) || u.id === actual)
+})
+
+const vehiculosDisponibles = computed(() => {
+    const ocupados = new Set(asignacionesActivas.value.map(a => a.vehiculo?.id))
+    const actual = asignacionSeleccionada.value?.vehiculo?.id
+    return vehiculos.value.filter(v => !ocupados.has(v.id) || v.id === actual)
+})
+
 
 const cargarAsignaciones = async () => {
     cargando.value = true
@@ -128,6 +144,8 @@ function limpiar() {
     observacionesDev.value = ''
     fechaFin.value = ''
     fechaInicio.value = ''
+    idAsignacion.value = ''
+    asignacionSeleccionada.value = null
     return
 }
 
@@ -240,7 +258,7 @@ onMounted(()=>{cargarAsignaciones();})
                         <v-btn
                         prepend-icon="mdi-plus"
                         color="success mr-5"
-                        @click="dialogNuevo = true; cargarUsuariosActivos(); cargarVehiculosActivos()">NUEVA ASIGNACIÓN</v-btn>
+                        @click="limpiar(); dialogNuevo = true; cargarUsuariosActivos(); cargarVehiculosActivos()">NUEVA ASIGNACIÓN</v-btn>
                     </v-card-title>
                     <v-card-subtitle class="d-flex align-center mr-6 ml-6">
                         <v-autocomplete
@@ -336,7 +354,7 @@ onMounted(()=>{cargarAsignaciones();})
 
                     <v-select
                     label="Usuario"
-                    :items="usuarios"
+                    :items="usuariosDisponibles"
                     :item-title="item => `${item.nombre} ${item.apellido}`"
                     item-value="id"
                     clearable
@@ -345,7 +363,7 @@ onMounted(()=>{cargarAsignaciones();})
 
                     <v-select
                     label="Vehículo"
-                    :items="vehiculos"
+                    :items="vehiculosDisponibles"
                     :item-title="item => `${item.tipo_vehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
                     item-value="id"
                     clearable
@@ -404,7 +422,7 @@ onMounted(()=>{cargarAsignaciones();})
 
                     <v-select
                     label="Usuario"
-                    :items="usuarios"
+                    :items="usuariosDisponibles"
                     :item-title="item => `${item.nombre} ${item.apellido}`"
                     item-value="id"
                     clearable
@@ -413,7 +431,7 @@ onMounted(()=>{cargarAsignaciones();})
 
                     <v-select
                     label="Vehículo"
-                    :items="vehiculos"
+                    :items="vehiculosDisponibles"
                     :item-title="item => `${item.tipo_vehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
                     item-value="id"
                     clearable

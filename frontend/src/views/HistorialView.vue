@@ -41,13 +41,13 @@ function popupUbicacion(u) {
     <strong>Placa: ${u.placa}</strong><br>
     Conductor: ${u.nombre} ${u.apellido}<br>
     Velocidad: ${u.velocidad}<br>
-    Registrado en: ${u.recibido_en}
+    Registrado en: ${new Date(u.registrado_en).toLocaleString('es-BO', { timeZone: 'America/La_Paz' })}
   `
 }
 
 function crearMarcador(u, clave) {
-  let lat = u.latitud
-  let lng = u.longitud
+  let lat = Number(u.latitud)
+  let lng = Number(u.longitud)
   // Aplicar pequeño offset si hay marcadores en las mismas coordenadas
   const mismosPuntos = [...marcadores.values()].filter(m => {
     const pos = m.getLatLng()
@@ -87,8 +87,8 @@ function sincronizarUbicaciones(listaUbicaciones) {
     }
 
     // Aplicar mismo offset si hay otros marcadores en las mismas coordenadas
-    let lat = ubicacion.latitud
-    let lng = ubicacion.longitud
+    let lat = Number(ubicacion.latitud)
+    let lng = Number(ubicacion.longitud)
     const mismosPuntos = [...marcadores.values()].filter(m => {
       const pos = m.getLatLng()
       return Math.abs(pos.lat - lat) < 0.000001 && Math.abs(pos.lng - lng) < 0.000001 && m !== marcador
@@ -139,25 +139,46 @@ const cargarUbicaciones = async () => {
   marcadores.clear()
 
   try {
-    const respuesta = await api.get('/ubicaciones/historial', {
-      params: {
-        vehiculo_id: vehiculoSeleccionado.value,
-        fecha_inicio: fecha_inicio.value,
-        fecha_fin: fecha_fin.value
+    const aISO = valor => {
+      if (!valor) return valor
+      const fecha = new Date(valor)
+      return Number.isNaN(fecha.getTime()) ? valor : fecha.toISOString()
+    }
+
+    const params = {
+      vehiculo_id: vehiculoSeleccionado.value,
+      fecha_inicio: aISO(fecha_inicio.value),
+      fecha_fin: aISO(fecha_fin.value)
+    }
+
+    const encontradas = []
+    let pagina = 1
+    let respuesta
+
+    do {
+      respuesta = await api.get('/ubicaciones/historial', {
+        params: { ...params, page: pagina }
+      })
+      if (Array.isArray(respuesta.data?.data)) {
+        encontradas.push(...respuesta.data.data)
       }
-    })
+      pagina++
+    } while (respuesta.data.pagination?.has_more)
 
-    ubicaciones.value = respuesta.data.data
-    console.log('Ubicaciones cargadas', respuesta.data.data)
+    ubicaciones.value = encontradas
+    console.log('Ubicaciones cargadas', ubicaciones.value)
 
-    if(!Array.isArray(respuesta.data.data) || respuesta.data.data.length === 0) {
+    if(ubicaciones.value.length === 0) {
       snackbar.value = true
     }
     sincronizarUbicaciones(ubicaciones.value)
     ajustarMapaVehiculos()
 
   } catch (err) {
-    error.value = err.response?.data?.message || 
+    console.error(err)
+    error.value = err.response?.data?.message ||
+      (err.response?.data?.errors && Object.values(err.response.data.errors).flat().join(' ')) ||
+      err.message ||
       'No se pudo cargar las ubicaciones'
     alert(error.value)
   } finally {
@@ -204,9 +225,9 @@ onBeforeUnmount(() => {
                         <v-autocomplete
                           label="Vehículo"
                           :items="vehiculos"
-                          :item-title="item => `${item.tipoVehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
+                          :item-title="item => `${item.tipo_vehiculo?.nombre ?? 'Sin tipo'} ${item.placa}`"
                           item-value="id"
-                          :filter-keys="['raw.placa', 'raw.tipoVehiculo.nombre']"
+                          :filter-keys="['raw.placa', 'raw.tipo_vehiculo.nombre']"
                           clearable
                           v-model="vehiculoSeleccionado"
                           :rules="[requerido]"

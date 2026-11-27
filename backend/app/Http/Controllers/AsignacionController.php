@@ -72,12 +72,44 @@ class AsignacionController extends Controller
     public function editarInfo ($id, Request $request) {
         $asignacion = AsignacionVehiculo::findOrFail($id);
 
-        $request->validate([
+        $datos = $request->validate([
+            'usuario_id' => [
+                'required',
+                'integer',
+                Rule::exists('usuarios', 'id')->where('activo', true),
+            ],
+            'vehiculo_id' => [
+                'required',
+                'integer',
+                Rule::exists('vehiculos', 'id')->where('activo', true),
+            ],
             'observaciones_entrega' => 'required|string',
         ]);
 
+        $activa = fn ($campo, $valor) => AsignacionVehiculo::where($campo, $valor)
+            ->where('activo', true)
+            ->whereNull('fecha_fin')
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($activa('usuario_id', $datos['usuario_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El usuario ya tiene una asignación activa.'
+            ], 409);
+        }
+
+        if ($activa('vehiculo_id', $datos['vehiculo_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El vehículo ya está asignado.'
+            ], 409);
+        }
+
         $asignacion->update([
-            'observaciones_entrega' => $request->observaciones_entrega
+            'usuario_id' => $datos['usuario_id'],
+            'vehiculo_id' => $datos['vehiculo_id'],
+            'observaciones_entrega' => $datos['observaciones_entrega']
         ]);
 
         return response()->json([
